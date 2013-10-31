@@ -1,0 +1,43 @@
+#!/bin/bash
+#
+# Show current IP
+#
+# Copyright (c) 2013 Malte Bublitz
+# All rights reserved.
+#
+
+if ip addr show eth0 |grep "state UP" &>/dev/null; then
+	IP_eth0_up=1
+else
+	IP_eth0_up=0
+fi
+if [ "$IP_eth0_up" -eq "1" ]; then
+	IP_eth0_v4=$(ip addr show eth0 |grep inet\  |awk '{ print $2 }' | cut -d/ -f1)
+	IP_eth0_v6=$(ip addr show eth0 |grep inet6\  |awk '{ print $2 }' | cut -d/ -f1)
+fi
+
+if ip addr show wlan0 |grep "state UP" &>/dev/null; then
+	IP_wlan0_up=1
+else
+	IP_wlan0_up=0
+	echo "WLAN down."
+fi
+if [ "$IP_wlan0_up" -eq "1" ]; then
+	IP_wlan0_v4=$(ip addr show wlan0 |grep inet\  |awk '{ print $2 }' | cut -d/ -f1)
+	IP_wlan0_v6=$(ip addr show wlan0 |grep inet6\  |awk '{ print $2 }' | cut -d/ -f1)
+fi
+
+if [ "$IP_eth0_up" -eq "1" ]; then
+	echo "(eth0) IPv4: ${IP_eth0_v4}"
+	echo "(eth0) IPv6: ${IP_eth0_v6}"
+else
+	echo "(eth0) Device down."
+fi
+
+if [ "$IP_wlan0_up" -eq "1" ]; then
+	echo "(wlan0) IPv4: ${IP_wlan0_v4}"
+	echo "(wlan0) IPv6: ${IP_wlan0_v6}"
+else
+	echo "(wlan0) Device down."
+fi
+
