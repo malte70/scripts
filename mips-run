@@ -1,0 +1,19 @@
+#!/bin/bash
+#
+# mips-run
+#    run a MIPS assembler program like a shell script.
+#    parses file with pypp, and executes it with mars.
+#    Also strips out MARS version info from output.
+# 
+# Copyright (c) 2013 Malte Bublitz.
+# All rights reserved.
+# 
+# Licensed under the terms of the 2-clause BSD license.
+# See LICENSE for details.
+#
+
+TMPFILE=/tmp/mips-run.$$
+pypp <$1 >$TMPFILE
+
+java -jar /opt/mars/Mars.jar sm $TMPFILE | sed -nr '/^MARS 4\.4/!p'
+
