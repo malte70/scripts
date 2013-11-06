@@ -12,8 +12,12 @@
 # See LICENSE for details.
 #
 
+MARS_JARFILE="/opt/mars/Mars.jar"
 TMPFILE=/tmp/mips-run.$$
+
 pypp <$1 >$TMPFILE
 
-java -jar /opt/mars/Mars.jar sm $TMPFILE | sed -nr '/^MARS 4\.4/!p'
+MARS_VERSION_INFO=$(java -jar $MARS_JARFILE h | head -n1 | awk '{ print $1 " " $2 }' | sed 's/\./\\./g')
+java -jar $MARS_JARFILE sm $TMPFILE | sed -nr "/^$MARS_VERSION_INFO/!p"
 
+rm $TMPFILE
