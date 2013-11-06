@@ -1,0 +1,38 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+#
+# Minimal Shell
+#    Use whenever a user should be able to launch a shell,
+#    but not to execute commands.
+#
+# Copyright (c) 2013 Malte Bublitz.
+# All rights reserved.
+# 
+# Licensed under the terms of the 2-clause BSD license.
+# See LICENSE for details.
+# 
+
+import platform
+
+commands_allowed = ("", "exit", "logout")
+command = ""
+
+print """
+This is Minimal Shell on node """+platform.node()+""".
+
+Type exit<ENTER> to exit.
+"""
+
+try:
+	while command != "exit":
+		print "> ",
+		command = raw_input()
+		if command == "logout":
+			command = "exit"
+		if not command in commands_allowed:
+			print "You may not execute commands!"
+			print "-minishell: "+command.split(" ")[0]+": Command not found."
+except EOFError:
+	print "<EOF>"
+
+print "Good bye."
