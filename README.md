@@ -11,6 +11,16 @@ generate\_password
 Generates a random and secure password. Length is passed
 as an argument, default is 8.
 
+getipv4/getipv6
+---------------
+
+*Language: Bourne-Shell*
+
+Resolves an IPv4 or IPv6 address. It only prints out the IP, nothing else,
+so it can be used to insert the IP of a host in an editor
+(`getent ahostsv4`/`getent ahostsv6`, which are internally used, print out some
+information you do not need in most cases).
+
 minishell
 ---------
 
