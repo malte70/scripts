@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+# Get the IPv6 address of a DNS name.
+#
+
+AHOSTSV6=$(getent ahostsv6 $1)
+[ $? -eq 2 ] && {
+	echo "DNS name $1 could not be resolved." >&2
+	exit 1
+}
+echo $AHOSTSV6 | head -n1 | awk '{ print $1 }'
+
