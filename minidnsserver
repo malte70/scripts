@@ -24,11 +24,10 @@ class DNSResolver(object):
 	Based on:
 		http://code.activestate.com/recipes/491264-mini-fake-dns-server/
 	"""
-	def __init__(self, data, suffix, ip, fallback):
+	def __init__(self, data, suffix, ip):
 		self.data = data
 		self.suffix = suffix
 		self.ip = ip
-		self.fallback = fallback
 		self.domain = ""
 		tipo = (ord(data[2]) >> 3) & 15 # Opcode bits
 		if tipo == 0:
@@ -81,17 +80,17 @@ def usage():
 	print """
 Usage: 
 
-\t# minidnsserver [suffix] [ip] [fallback dns server]
+\t# minidnsserver [suffix] [ip]
 
 Description:
 
 \tMiniDNSServer resolves all requests ending with the specified suffix to the given IP.
-\tIn all other cases, the IP will be determined by a query to the fallback DNS server.
+\tIn all other cases, the IP will be determined by a query to the systen's DNS system.
 
 Example:
-\t# minidnsserver dev 127.0.0.1 192.168.1.1
+\t# minidnsserver dev 127.0.0.1
 All domains ending with .dev will be resolved to localhost, everything else will
-be resolved by the network's router, which will query your ISP's DNS servers in most
+be resolved by the system's default DNS servers.
 cases.
 """
 
@@ -99,17 +98,17 @@ def main():
 	suffix = None
 	ip = None
 	fallback = None
-	if sys.argv[1]=="--debug":
-		debug = True
-		del sys.argv[1]
-	else:
-		debug = False
-	if len(sys.argv) != 4:
+	if len(sys.argv)>1:
+		if sys.argv[1]=="--debug":
+			debug = True
+			del sys.argv[1]
+		else:
+			debug = False
+	if len(sys.argv) != 3:
 		usage()
 		sys.exit(1)
 	suffix = sys.argv[1] + "."
 	ip = sys.argv[2]
-	fallback = sys.argv[3]
 	
 	try:
 		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -123,9 +122,7 @@ def main():
 	try:
 		while True:
 			data, addr = s.recvfrom(1024)
-			#if p.isResponsible:
-			p = DNSResolver(data, suffix, ip, fallback)
-			#print "Request: %s -> %s" % (p.domain, ip)
+			p = DNSResolver(data, suffix, ip)
 			s.sendto(p.response(), addr)
 			if debug: print "%s IN A %s" % (p.domain, p.resolved_ip)
 	except KeyboardInterrupt:
