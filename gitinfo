@@ -1,0 +1,33 @@
+#!/bin/zsh
+#
+# git info
+#    Shows information about a git repository
+#    for the zsh prompt.
+#
+
+if [ ! -d .git ]; then
+	UPSTREAM="no git"
+else
+	# Test internet connection, needed for the git remote command.
+	ping -c1 -W 1 178.63.11.250 &>/dev/null
+	if [ $? -eq 1 ]; then
+		UPSTREAM="!fail!"
+	else
+		CACHEFILE=~/.cache/git-info/`pwd | tr '/' '='`
+		if [ -f $CACHEFILE ] && [[ $(python2 -c 'import os.path,time;print "yes" if (time.time()-os.path.getmtime("/home/malte/.vimrc"))/(60*60*24) > 2.0 else "no"') == "no" ]]; then
+			UPSTREAM=`cat $CACHEFILE`
+		else
+			REMOTE=`git config --get remote.origin.url`
+			BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+			if [[ "${REMOTE:0:14}" == "git@github.com" ]]; then
+				UPSTREAM="${REMOTE:15:-4}:$BRANCH"
+			elif [[ "${REMOTE:0:19}" == "https://github.com/" ]]; then
+				UPSTREAM="${REMOTE:19}:$BRANCH"
+			else
+				UPSTREAM="${REMOTE}:$BRANCH"
+			fi
+		fi
+		echo -n $UPSTREAM > $CACHEFILE
+	fi
+fi
+echo $UPSTREAM
