@@ -117,13 +117,16 @@ def main():
 		print "Failed to create socket on UDP port 53:", e
 		sys.exit(1)
 	
-	print "MiniDNSServer :: *"+suffix+" 60 IN A "+ip
+	print "MiniDNSServer :: *."+suffix+" 60 IN A "+ip
 	
 	try:
 		while True:
 			data, addr = s.recvfrom(1024)
 			p = DNSResolver(data, suffix, ip)
-			s.sendto(p.response(), addr)
+			try:
+				s.sendto(p.response(), addr)
+			except Exception as e:
+				if debug: print "Got Exception",e.message
 			if debug: print "%s IN A %s" % (p.domain, p.resolved_ip)
 	except KeyboardInterrupt:
 		print "\nBye!"
