@@ -18,6 +18,9 @@ else
 			UPSTREAM=`cat $CACHEFILE`
 		else
 			REMOTE=`git config --get remote.origin.url`
+			if [ -z "$REMOTE" ]; then
+				REMOTE="(local)$(basename `pwd`)"
+			fi
 			BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 			if [[ "${REMOTE:0:14}" == "git@github.com" ]]; then
 				UPSTREAM="${REMOTE:15:-4}:$BRANCH"
