@@ -4,7 +4,7 @@
 #
 
 IMGNAME="screenshot.`hostname -s`_`date --iso-8601`.png"
-IMGPATH="Bilder/$IMGNAME"
+IMGPATH="$HOME/Bilder/$IMGNAME"
 
 scrot $IMGPATH
 
