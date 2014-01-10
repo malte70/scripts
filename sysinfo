@@ -1,0 +1,114 @@
+#!/bin/sh
+
+version_info() {
+	echo "sysinfo 20140110"
+	echo "Copyright (c) 2014 Malte Bublitz"
+}
+display_help() {
+	version_info
+	echo
+	echo "Options:
+	-V	Display version information
+	-h	Display this help
+Reort options
+	-o	Operating System
+	-r	OS Kernel
+	-n	Nodename/Hostname
+	-u	Uptime
+	-w	Window Manager
+	-m	Used/available RAM
+	-e	Environment (Shell/Editor/Browser)
+	-a	Display all information"
+}
+info_os() {
+	echo -n "OS: "
+	if [ -f /etc/arch-release ]; then
+		echo -n "Arch Linux"
+	elif [ -f /etc/lsb-release ]; then
+		(
+			. /etc/lsb-release
+			echo -n $DISTRIB_DESCRIPTION
+		)
+	fi
+	echo -n " "
+	uname -m
+}
+info_kernel() {
+	echo "Kernel: `uname -sr`"
+}
+info_nodename() {
+	echo -n "Hostname: "
+	hostname -f
+}
+info_uptime() {
+	echo -n "Uptime: "
+	uptime | cut -d"," -f1 | cut -d" " -f5-
+}
+info_wm() {
+	echo -n "WM: "
+	ps x | grep "awesome" >/dev/null && echo "Awesome"
+}
+info_mem() {
+	echo -n "RAM: "
+	free -m | grep buffers/cache | awk '{ print $3 "MB" }' | tr -d "\n"
+	echo -n " / "
+	free -m | grep ^Mem | awk '{ print $2 "MB" }'
+}
+info_env() {
+	[ -n $SHELL ] && echo "Shell: `basename $SHELL`"
+	[ -n $EDITOR ] && echo "Editor: `basename $EDITOR`"
+	[ -n $BROWSER ] && echo "Browser: `basename $BROWSER`"
+}
+
+if [ -z "$1" ]
+then
+	display_help
+	exit 1
+fi
+while getopts "Vhornuwmea" opt; do
+	case $opt in
+		V)
+			version_info
+			exit 0
+			;;
+		h)
+			display_help
+			exit 0
+			;;
+		o)
+			info_os
+			;;
+		r)
+			info_kernel
+			;;
+		n)
+			info_nodename
+			;;
+		u)
+			info_uptime
+			;;
+		w)
+			info_wm
+			;;
+		m)
+			info_mem
+			;;
+		e)
+			info_env
+			;;
+		a)
+			info_os
+			info_kernel
+			info_nodename
+			info_uptime
+			info_wm
+			info_mem
+			info_env
+			;;
+		*)
+			display_help
+			exit 1
+			;;
+	esac
+done
+
