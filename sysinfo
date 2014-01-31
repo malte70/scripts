@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+# Use bash or zsh, sh won't work in many cases!
 
 version_info() {
 	echo "sysinfo 20140110"
@@ -63,7 +64,7 @@ info_mem() {
 	echo -n "RAM: "
 	if [ `uname` == "Darwin" ]; then
 		# Darwin/OS X is missing the free command, using "top" instead.
-		top -l 1 | head -n 10 | grep PhysMem | cut -d"(" -f 2 | cut -d")" -f1 | cut -f1 | tr -d "M" | tr -d "\n"
+		top -l 1 | head -n 10 | grep PhysMem | cut -d"(" -f 2 | cut -d" " -f1 | cut -f1 | tr -d "M" | tr -d "\n"
 		echo -n " MB / "
 		{
 			top -l 1 | head -n 10 | grep PhysMem | awk '{ print $2 }' | tr -d "M\n"
