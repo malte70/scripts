@@ -72,7 +72,10 @@ class DNSResolver(object):
 			packet += self.data[12:] # Original Domain Name Question
 			packet += "\xc0\x0c" # Pointer to domain name
 			packet += "\x00\x01\x00\x01\x00\x00\x00\x3c\x00\x04" # Response type, ttl and resource data length -> 4 bytes
-			packet += str.join("", map(lambda x: chr(int(x)), ip.split("."))) # 4 bytes of IP
+			try:
+				packet += str.join("", map(lambda x: chr(int(x)), ip.split("."))) # 4 bytes of IP
+			except (ValueError, AttributeError):
+				pass
 			self.resolved_ip = ip
 		return packet
 
@@ -123,10 +126,7 @@ def main():
 		while True:
 			data, addr = s.recvfrom(1024)
 			p = DNSResolver(data, suffix, ip)
-			try:
-				s.sendto(p.response(), addr)
-			except Exception as e:
-				if debug: print "Got Exception",e.message
+			s.sendto(p.response(), addr)
 			if debug: print "%s IN A %s" % (p.domain, p.resolved_ip)
 	except KeyboardInterrupt:
 		print "\nBye!"
