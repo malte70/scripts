@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+# Use bash or zsh, sh won't work in many cases!
 
 version_info() {
 	echo "sysinfo 20140110"
@@ -29,6 +30,9 @@ info_os() {
 			. /etc/lsb-release
 			echo -n $DISTRIB_DESCRIPTION
 		)
+	elif [ `uname` == "Darwin" ]; then
+		echo -n "Mac OS X "
+		python -c 'import platform; print platform.mac_ver()[0],' | tr -d "\n"
 	fi
 	echo -n " "
 	uname -m
@@ -42,22 +46,42 @@ info_nodename() {
 }
 info_uptime() {
 	echo -n "Uptime: "
-	uptime | cut -d"," -f1 | cut -d" " -f5-
+	if [ `uname` == "Darwin" ]; then
+		LC_ALL=C uptime | python -c 'import sys;l = sys.stdin.readline().split(","); print " ".join(l[:-2])' | cut -d" " -f5-
+	else
+		LC_ALL=C uptime | python2 -c 'import sys;l = sys.stdin.readline().split(","); print " ".join(l[:-4])' | cut -d" " -f4-
+	fi
 }
 info_wm() {
 	echo -n "WM: "
-	ps x | grep "awesome" >/dev/null && echo "Awesome"
+	ps x | grep "X" >/dev/null || WM="None"
+	ps x | grep "awesome" >/dev/null && WM="Awesome"
+	ps x | grep "SystemUIServer" >/dev/null && WM="Aqua"
+	[ -z $WM ] && WM="Unknown"
+	echo $WM
 }
 info_mem() {
 	echo -n "RAM: "
-	free -m | grep buffers/cache | awk '{ print $3 "MB" }' | tr -d "\n"
-	echo -n " / "
-	free -m | grep ^Mem | awk '{ print $2 "MB" }'
+	if [ `uname` == "Darwin" ]; then
+		# Darwin/OS X is missing the free command, using "top" instead.
+		top -l 1 | head -n 10 | grep PhysMem | cut -d"(" -f 2 | cut -d" " -f1 | cut -f1 | tr -d "M" | tr -d "\n"
+		echo -n " MB / "
+		{
+			top -l 1 | head -n 10 | grep PhysMem | awk '{ print $2 }' | tr -d "M\n"
+			echo -n "+"
+			top -l 1 | head -n 10 | grep PhysMem | awk '{ print $6 }' | tr -d "M"
+		} | bc | tr -d "\n"
+		echo " MB"
+	else
+		free -m | grep buffers/cache | awk '{ print $3 "MB" }' | tr -d "\n"
+		echo -n " / "
+		free -m | grep ^Mem | awk '{ print $2 "MB" }'
+	fi
 }
 info_env() {
 	[ -n $SHELL ] && echo "Shell: `basename $SHELL`"
 	[ -n $EDITOR ] && echo "Editor: `basename $EDITOR`"
-	[ -n $BROWSER ] && echo "Browser: `basename $BROWSER`"
+	[ -f "$BROWSER" ] && echo "Browser: `basename $BROWSER`"
 }
 
 if [ -z "$1" ]
@@ -111,4 +135,4 @@ while getopts "Vhornuwmea" opt; do
 			;;
 	esac
 done
-
+exit 0
