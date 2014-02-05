@@ -26,6 +26,8 @@ else
 				UPSTREAM="${REMOTE:15:-4}:$BRANCH"
 			elif [[ "${REMOTE:0:19}" == "https://github.com/" ]]; then
 				UPSTREAM="${REMOTE:19}:$BRANCH"
+			elif [[ "${REMOTE:0:25}" == "thisismyspacesofuckoffnow" ]]; then
+				UPSTREAM="inutile:$BRANCH"
 			else
 				UPSTREAM="${REMOTE}:$BRANCH"
 			fi
