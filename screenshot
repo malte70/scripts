@@ -8,6 +8,10 @@ IMGPATH="$HOME/Bilder/$IMGNAME"
 
 scrot $IMGPATH
 
+echo "File is $IMGPATH."
+echo "Press enter to continue after you edited it, or Ctrl+C to abort upload"
+read
+
 scp -q $IMGPATH khaos.malte70.de:~/f.malte70.de/$IMGNAME
 
 echo "Uploaded to: http://f.malte70.de/$IMGNAME"
