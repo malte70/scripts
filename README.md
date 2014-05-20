@@ -21,6 +21,23 @@ so it can be used to insert the IP of a host in an editor
 (`getent ahostsv4`/`getent ahostsv6`, which are internally used, print out some
 information you do not need in most cases).
 
+minidnsserver
+-------------
+
+*Language: Python 2*
+
+Resolves a custom DNS prefix to a specific IP, and everything else througt
+the system's default DNS servers.
+
+Usage:
+
+    minidnsserver [suffix] [ip]
+
+Example:
+
+    minidnsserver dev 127.0.0.1
+    # Resolves *.dev to 127.0.0.1
+
 minishell
 ---------
 

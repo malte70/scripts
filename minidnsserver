@@ -1,0 +1,138 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Minimal DNS Server
+#    Resolves pre-defined domains for e.g. your local test server,
+#    and resolves everything else through a upstream DNS server.
+# 
+# Copyright (c) 2013 Malte Bublitz.
+# All rights reserved.
+# 
+# Licensed under the terms of the 2-clause BSD license.
+# See LICENSE for details.
+#
+# Inspired by minidns:
+#    http://code.activestate.com/recipes/491264-mini-fake-dns-server/
+#
+
+import sys
+import socket
+import dns.resolver
+
+class DNSResolver(object):
+	"""
+	Based on:
+		http://code.activestate.com/recipes/491264-mini-fake-dns-server/
+	"""
+	def __init__(self, data, suffix, ip):
+		self.data = data
+		self.suffix = suffix
+		self.ip = ip
+		self.domain = ""
+		tipo = (ord(data[2]) >> 3) & 15 # Opcode bits
+		if tipo == 0:
+			ini = 12
+			lon = ord(data[ini])
+			while lon != 0:
+				self.domain += data[ini+1:ini+lon+1]+"."
+				ini += lon+1
+				lon = ord(data[ini])
+		if self.domain.endswith(suffix):
+			self.isResponsible = True
+		else:
+			self.isResponsible = False
+		
+	def resolveFallback(self):
+		res = dns.resolver.Resolver()
+		res.nameservers = [x for x in res.nameservers if x != "127.0.0.1"]
+		try:
+			answer = res.query(self.domain)
+			is_answer = False
+			ip = "127.0.0.1"
+			for line in answer.response.to_text().split("\n"):
+				if line == ";ANSWER":
+					is_answer = True
+					continue
+				if is_answer:
+					ip = line.split(" ")[4]
+					is_answer = False
+			return ip
+		except dns.resolver.NXDOMAIN:
+			pass
+		
+	def response(self):
+		packet = ""
+		if self.domain:
+			if self.isResponsible:
+				ip = self.ip
+			else:
+				ip = self.resolveFallback()
+			packet += self.data[:2] + "\x81\x80"
+			packet += self.data[4:6] + self.data[4:6] + "\x00\x00\x00\x00" # Question and Answers counts
+			packet += self.data[12:] # Original Domain Name Question
+			packet += "\xc0\x0c" # Pointer to domain name
+			packet += "\x00\x01\x00\x01\x00\x00\x00\x3c\x00\x04" # Response type, ttl and resource data length -> 4 bytes
+			try:
+				packet += str.join("", map(lambda x: chr(int(x)), ip.split("."))) # 4 bytes of IP
+			except (ValueError, AttributeError):
+				pass
+			self.resolved_ip = ip
+		return packet
+
+def usage():
+	print """
+Usage: 
+
+\t# minidnsserver [suffix] [ip]
+
+Description:
+
+\tMiniDNSServer resolves all requests ending with the specified suffix to the given IP.
+\tIn all other cases, the IP will be determined by a query to the systen's DNS system.
+
+Example:
+\t# minidnsserver dev 127.0.0.1
+All domains ending with .dev will be resolved to localhost, everything else will
+be resolved by the system's default DNS servers.
+cases.
+"""
+
+def main():
+	suffix = None
+	ip = None
+	fallback = None
+	if len(sys.argv)>1:
+		if sys.argv[1]=="--debug":
+			debug = True
+			del sys.argv[1]
+		else:
+			debug = False
+	if len(sys.argv) != 3:
+		usage()
+		sys.exit(1)
+	suffix = sys.argv[1] + "."
+	ip = sys.argv[2]
+	
+	try:
+		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		s.bind( ('', 53) )
+	except Exception, e:
+		print "Failed to create socket on UDP port 53:", e
+		sys.exit(1)
+	
+	print "MiniDNSServer :: *."+suffix+" 60 IN A "+ip
+	
+	try:
+		while True:
+			data, addr = s.recvfrom(1024)
+			p = DNSResolver(data, suffix, ip)
+			s.sendto(p.response(), addr)
+			if debug: print "%s IN A %s" % (p.domain, p.resolved_ip)
+	except KeyboardInterrupt:
+		print "\nBye!"
+		s.close()
+		sys.exit(0)
+
+if __name__=="__main__":
+	main()
+

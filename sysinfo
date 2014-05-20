@@ -1,0 +1,215 @@
+#!/bin/bash
+# Use bash or zsh, sh won't work in many cases!
+
+version_info() {
+	echo "sysinfo 20140110"
+	echo "Copyright (c) 2014 Malte Bublitz"
+}
+display_help() {
+	version_info
+	echo
+	echo "Options:
+	-V	Display version information
+	-h	Display this help
+Reort options
+	-o	Operating System
+	-r	OS Kernel
+	-n	Nodename/Hostname
+	-u	Uptime
+	-w	Window Manager
+	-m	Used/available RAM
+	-c CPU info
+	-e	Environment (Shell/Editor/Browser)
+	-a	Display all information"
+}
+info_os() {
+	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 3))');'`
+	echo -n "OS${DOTS}: "
+	if [ -f /etc/arch-release ]; then
+		echo -n "Arch Linux"
+	elif [ -f /etc/lsb-release ]; then
+		(
+			. /etc/lsb-release
+			echo -n $DISTRIB_DESCRIPTION
+		)
+	elif [ `uname` == "Darwin" ]; then
+		echo -n "Mac OS X "
+		python -c 'import platform; print platform.mac_ver()[0],' | tr -d "\n"
+	fi
+	echo -n " "
+	uname -m
+}
+info_kernel() {
+	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
+	echo "Kernel${DOTS}: `uname -sr`"
+}
+info_nodename() {
+	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 9))');'`
+	echo -n "Hostname${DOTS}: "
+	hostname -f
+}
+info_uptime() {
+	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
+	echo -n "Uptime${DOTS}: "
+	if [ `uname` == "Darwin" ]; then
+		LC_ALL=C uptime | python -c 'import sys;l = sys.stdin.readline().split(","); print " ".join(l[:-2])' | cut -d" " -f5-
+	else
+		LC_ALL=C uptime | python2 -c 'import sys;l = sys.stdin.readline().split(","); print " ".join(l[:-4])' | cut -d" " -f4-
+	fi
+}
+info_wm() {
+	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 3))');'`
+	echo -n "WM${DOTS}: "
+	ps x | grep "X" >/dev/null || WM="None"
+	ps x | grep "awesome" >/dev/null && WM="Awesome"
+	ps x | grep "SystemUIServer" >/dev/null && WM="Aqua"
+	[ -z $WM ] && WM="Unknown"
+	echo $WM
+}
+info_mem() {
+	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 4))');'`
+	echo -n "RAM${DOTS}: "
+	if [ `uname` == "Darwin" ]; then
+		# Darwin/OS X is missing the free command, using "top" instead.
+		top -l 1 | head -n 10 | grep PhysMem | cut -d"(" -f 2 | cut -d" " -f1 | cut -f1 | tr -d "M" | tr -d "\n"
+		echo -n " MB / "
+		{
+			top -l 1 | head -n 10 | grep PhysMem | awk '{ print $2 }' | tr -d "M\n"
+			echo -n "+"
+			top -l 1 | head -n 10 | grep PhysMem | awk '{ print $6 }' | tr -d "M"
+		} | bc | tr -d "\n"
+		echo " MB"
+	else
+		free -m | grep buffers/cache | awk '{ print $3 "MB" }' | tr -d "\n"
+		echo -n " / "
+		free -m | grep ^Mem | awk '{ print $2 "MB" }'
+	fi
+}
+info_cpu() {
+	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 4))');'`
+	echo -n "CPU${DOTS}: "
+	if [ `uname` == "Darwin" ]; then
+		sysctl -a | grep machdep.cpu.brand_string | cut -c 27-
+	else
+		# Output is translated, but for grep, we need the original one.
+		LC_ALL=C lscpu G 'Model name:' | cut -c 24-
+	fi
+}
+info_env() {
+	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 6))');'`
+	[ -n $SHELL ] && echo "Shell${DOTS}: `basename $SHELL`"
+	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
+	[ -n $EDITOR ] && echo "Editor${DOTS}: `basename $EDITOR`"
+	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 8))');'`
+	[ -f "$BROWSER" ] && echo "Browser${DOTS}: `basename $BROWSER`"
+}
+
+if [ -z "$1" ]
+then
+	display_help
+	exit 1
+fi
+# Length for descriptive column
+DESC_COL_LENGTH=2
+
+# parse arguments once to get $DESC_COL_LENGTH
+while getopts "Vhornuwmea" opt; do
+	case $opt in
+		o)
+			if [[ $DESC_COL_LENGTH -lt 3 ]]; then
+				DESC_COL_LENGTH=3
+			fi
+			;;
+		r)
+			if [[ $DESC_COL_LENGTH -lt 7 ]]; then
+				DESC_COL_LENGTH=7
+			fi
+			;;
+		n)
+			if [[ $DESC_COL_LENGTH -lt 9 ]]; then
+				DESC_COL_LENGTH=9
+			fi
+			;;
+		u)
+			if [[ $DESC_COL_LENGTH -lt 7 ]]; then
+				DESC_COL_LENGTH=7
+			fi
+			;;
+		w)
+			if [[ $DESC_COL_LENGTH -lt 3 ]]; then
+				DESC_COL_LENGTH=3
+			fi
+			;;
+		m)
+			if [[ $DESC_COL_LENGTH -lt 3 ]]; then
+				DESC_COL_LENGTH=3
+			fi
+			;;
+		c)
+			if [[ $DESC_COL_LENGTH -lt 4 ]]; then
+				DESC_COL_LENGTH=4
+			fi
+			;;
+		e)
+			if [[ $DESC_COL_LENGTH -lt 8 ]]; then
+				DESC_COL_LENGTH=8
+			fi
+			;;
+	esac
+done
+
+OPTIND=1
+
+# parse arguments again, and now, display the information.
+while getopts "Vhornuwmea" opt; do
+	case $opt in
+		V)
+			version_info
+			exit 0
+			;;
+		h)
+			display_help
+			exit 0
+			;;
+		o)
+			info_os
+			;;
+		r)
+			info_kernel
+			;;
+		n)
+			info_nodename
+			;;
+		u)
+			info_uptime
+			;;
+		w)
+			info_wm
+			;;
+		m)
+			info_mem
+			;;
+		c)
+			info_cpu
+			;;
+		e)
+			info_env
+			;;
+		a)
+			export DESC_COL_LENGTH=9
+			info_os
+			info_kernel
+			info_nodename
+			info_uptime
+			info_wm
+			info_mem
+			info_cpu
+			info_env
+			;;
+		*)
+			display_help
+			exit 1
+			;;
+	esac
+done
+exit 0
