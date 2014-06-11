@@ -1,0 +1,57 @@
+#!/bin/zsh
+
+if [[ ( $# -ne 2 && $1 != "none" && $# -ne 0 ) || $1 == "--help" ]]; then
+	echo "Usage: screen_resize [Position of internal screen] [External resolution]"
+	echo "Position of internal screen (can be omitted if no external screen is present):"
+	echo "\t\"left\" or \"right\""
+	echo "External resolution:"
+	echo "\t\"none\", \"1024x768\" or \"1920x1080\""
+	if [[ $1 == "--help" ]]; then
+		exit 0
+	fi
+	exit 1
+fi
+
+if [[ $# -eq 0 ]]; then
+	xrandr --output VIRTUAL1 --off --output LVDS1 --mode 1366x768 --pos 0x0 --rotate normal --output VGA1 --off
+else
+	case $1 in
+		"left")
+			case $2 in
+				"extern_1024")
+					xrandr \
+						--output VIRTUAL1 --off \
+						--output LVDS1    --mode 1366x768 --pos 0x0    --rotate normal \
+						--output VGA1     --mode 1024x768 --pos 1366x0 --rotate normal
+					;;
+				"extern_1920")
+					xrandr \
+						--output VIRTUAL1 --off \
+						--output LVDS1    --mode 1366x768  --pos 0x0    --rotate normal \
+						--output VGA1     --mode 1920x1080 --pos 1366x0 --rotate normal
+					;;
+			esac
+			;;
+		"right")
+			case $2 in
+				"extern_1024")
+					xrandr \
+						--output VIRTUAL1 --off \
+						--output VGA1     --mode 1024x768 --pos 0x0    --rotate normal \
+						--output LVDS1    --mode 1366x768 --pos 1024x0 --rotate normal
+					;;
+				"extern_1920")
+					xrandr \
+						--output VIRTUAL1 --off \
+						--output VGA1     --mode 1920x1080 --pos 0x0    --rotate normal \
+						--output LVDS1    --mode 1366x768  --pos 1920x0 --rotate normal
+					;;
+			esac
+			;;
+		"none")
+			xrandr --output VIRTUAL1 --off --output LVDS1 --mode 1366x768 --pos 0x0 --rotate normal --output VGA1 --off
+			;;
+	esac
+fi
+
+which wallpaper &>/dev/null && wallpaper
