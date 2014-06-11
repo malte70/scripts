@@ -21,13 +21,17 @@ CONFIG = {
 	"UserInfo": {
 		"malte70": """Full name: Malte Bublitz
 Twitter: @malte70
-IRC: malte70 on irc.malte-bublitz.de"""
+IRC: malte70 on irc.malte-bublitz.de""",
+		"ip": "%%IP%%",
+		"myip": """Your IP: %%IP%%
+Your Hostname: %%FQDN%%"""
 		},
         "UserNonExistentError": "The requested user does not exist."
 	}
 
 import SocketServer
 import string
+from socket import getfqdn
 
 class FingerHandler(SocketServer.StreamRequestHandler):
 	def handle(self):
@@ -44,8 +48,8 @@ class FingerHandler(SocketServer.StreamRequestHandler):
 			info = CONFIG["ServerInfo"]
 		else:
 			if CONFIG["UserInfo"].has_key(username):
-				info = CONFIG["UserInfo"][username]
-                        else:
+				info = CONFIG["UserInfo"][username].replace("%%IP%%", self.client_address[0]).replace("%%FQDN%%", getfqdn(self.client_address[0]))
+			else:
 				info = CONFIG["UserNonExistentError"]
 		self.wfile.write(info+"\n")
 		

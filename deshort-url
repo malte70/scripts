@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# deshort-url
+#    Gets the real URL behind a short URL like bit.ly/foobar
+#
+# Copyright (c) 2014 Malte Bublitz.
+# All rights reserved.
+# 
+# Licensed under the terms of the 2-clause BSD license.
+# See LICENSE for details.
+#
+
+if [ $# -ne 1 ]; then
+	echo "Usage: $0 <URL>" >&2
+	exit 1
+fi
+
+if ! which curl &>/dev/null; then
+   echo "curl not in \$PATH. Please update your environment or install curl." >&2
+   exit 1
+fi
+
+curl -s -I "$1" | awk '/^Location/ { print $2 }'
