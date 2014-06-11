@@ -1,0 +1,61 @@
+#!/usr/bin/env python
+# -*- coding:: utf-8 -*-
+#
+
+__WALLPAPERS__ = {
+        # internal only
+        "1366x768": [
+            [
+                "/home/malte/.wallpaper",
+                "1366x768"
+            ]
+        ],
+        # internal + external at home
+        "3286x1080": [
+            [
+                "/home/malte/Bilder/Wallpaper/nsfw/85d01abb71efa1d110efb92e00faa0ea.jpg",
+                "1920x1080"
+            ],
+            [
+                "/home/malte/Bilder/Wallpaper/nsfw/ba2e1b3b9b9660e0ad710acf635c844c.jpg",
+                "1366x768"
+            ]
+        ],
+        # internal + beamer/small screen
+        "2390x768": [
+            [
+                "/home/malte/Bilder/Wallpaper/nsfw/85d01abb71efa1d110efb92e00faa0ea.jpg",
+                "1920x1080"
+            ],
+            [
+                "/home/malte/Bilder/Wallpaper/nsfw/ba2e1b3b9b9660e0ad710acf635c844c.jpg",
+                "1366x768"
+            ]
+        ]
+}
+import os, sys
+
+__RESOLUTION__ = os.popen(" xrandr -q | grep 'Screen 0' | sed -r 's/^.+current //g;s/, max.+$//g;s/ //g' | tr -d \"\\n\"").read()
+
+def main():
+    if not __RESOLUTION__ in __WALLPAPERS__:
+        os.system("hsetroot -tile /home/malte/.wallpaper.minimal")
+    else:
+        for i, wp in enumerate(__WALLPAPERS__[__RESOLUTION__]):
+            os.system('convert "' + wp[0] + '" -resize "' + wp[1] + '" /tmp/.' + str(os.getpid())+ '_WP_' + str(i) + '.png')
+        convert_cmd = "convert "
+        for i, wp in enumerate(__WALLPAPERS__[__RESOLUTION__]):
+            convert_cmd += "/tmp/." + str(os.getpid())+ "_WP_"+str(i)+".png "
+        convert_cmd += "+append /tmp/." + str(os.getpid())+ "_WP.png"
+        os.system(convert_cmd)
+        os.system("rm /tmp/." + str(os.getpid())+ "_WP_*.png")
+        os.system("hsetroot -full /tmp/." + str(os.getpid())+ "_WP.png")
+        os.system("rm /tmp/." + str(os.getpid())+ "_WP.png")
+            
+
+#os.system('convert "' + __WALLPAPERS__[1][0] + '" -resize "' + __WALLPAPERS__[1][1] + '" /tmp/WP2.png')
+#os.system('convert /tmp/WP1.png /tmp/WP2.png +append /tmp/WP.png')
+#os.system('hsetroot -full /tmp/WP.png')
+
+if __name__=="__main__":
+    main()
