@@ -19,6 +19,7 @@ Reort options
 	-w	Window Manager
 	-m	Used/available RAM
 	-e	Environment (Shell/Editor/Browser)
+	-l  Locale
 	-a	Display all information"
 }
 info_os() {
@@ -83,13 +84,19 @@ info_env() {
 	[ -n $EDITOR ] && echo "Editor: `basename $EDITOR`"
 	[ -f "$BROWSER" ] && echo "Browser: `basename $BROWSER`"
 }
+info_locale() {
+	[ -n $LC_ALL ] && locale=$LC_ALL
+	[ -n $LANG ] && locale=$LANG
+	[ -z $locale ] && locale=C
+	echo "Locale: $locale"
+}
 
 if [ -z "$1" ]
 then
 	display_help
 	exit 1
 fi
-while getopts "Vhornuwmea" opt; do
+while getopts "Vhornuwmela" opt; do
 	case $opt in
 		V)
 			version_info
@@ -120,6 +127,9 @@ while getopts "Vhornuwmea" opt; do
 		e)
 			info_env
 			;;
+		l)
+			info_locale
+			;;
 		a)
 			info_os
 			info_kernel
@@ -128,6 +138,7 @@ while getopts "Vhornuwmea" opt; do
 			info_wm
 			info_mem
 			info_env
+			info_locale
 			;;
 		*)
 			display_help
