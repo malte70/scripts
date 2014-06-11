@@ -1,0 +1,34 @@
+#!/bin/zsh
+# 
+# Firewall script
+#
+# Copyright (c) 2013-2014 Malte Bublitz
+# All rights reserved.
+#
+
+IPT==iptables
+
+flush(){
+	$IPT           -F
+	$IPT -t nat    -F
+	$IPT -t mangle -F
+	$IPT           -X
+	$IPT -t nat    -X
+	$IPT -t mangle -X
+}
+defaults() {
+	$IPT -P INPUT   DROP
+	$IPT -P OUTPUT  ACCEPT
+	$IPT -P FORWARD DROP
+}
+accept_local(){
+	$IPT -A INPUT  -p ALL -i lo -j ACCEPT
+}
+accept_established() {
+	$IPT -A INPUT  -p ALL -m state --state ESTABLISHED,RELATED -j ACCEPT
+}
+	
+flush
+defaults
+accept_local
+accept_established
