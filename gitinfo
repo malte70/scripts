@@ -9,12 +9,13 @@ if [ ! -d .git ]; then
 	UPSTREAM="no git"
 else
 	# Test internet connection, needed for the git remote command.
-	ping -c1 -W 1 178.63.11.250 &>/dev/null
+	# Using google-public-dns-a.google.com (8.8.8.8), which can be used for this.
+	ping -c1 -W 1 8.8.8.8 &>/dev/null
 	if [ $? -eq 1 ]; then
 		UPSTREAM="!fail!"
 	else
 		CACHEFILE=~/.cache/git-info/`pwd | tr '/' '='`
-		if [ -f $CACHEFILE ] && [[ $(python2 -c 'import os.path,time;print "yes" if (time.time()-os.path.getmtime("/home/malte/.vimrc"))/(60*60*24) > 2.0 else "no"') == "no" ]]; then
+		if [ -f $CACHEFILE ] && [[ $(python2 -c 'import os.path,time;print "yes" if (time.time()-os.path.getmtime("'"$CACHEFILE"'"))/(60*60*24) > 2.0 else "no"') == "no" ]]; then
 			UPSTREAM=`cat $CACHEFILE`
 		else
 			REMOTE=`git config --get remote.origin.url`
@@ -26,8 +27,6 @@ else
 				UPSTREAM="${REMOTE:15:-4}:$BRANCH"
 			elif [[ "${REMOTE:0:19}" == "https://github.com/" ]]; then
 				UPSTREAM="${REMOTE:19}:$BRANCH"
-			elif [[ "${REMOTE:0:25}" == "thisismyspacesofuckoffnow" ]]; then
-				UPSTREAM="inutile:$BRANCH"
 			elif [[ "${REMOTE:0:24}" == "malte70@khaos.malte70.de" ]]; then
 				UPSTREAM="khaos/${REMOTE:34:-4}:$BRANCH"
 			else
