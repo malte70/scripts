@@ -2,7 +2,7 @@
 # Use bash or zsh, sh won't work in many cases!
 
 version_info() {
-	echo "sysinfo 20140110"
+	echo "sysinfo 20140831"
 	echo "Copyright (c) 2014 Malte Bublitz"
 }
 display_help() {
@@ -55,16 +55,18 @@ info_uptime() {
 	if [ `uname` == "Darwin" ]; then
 		LC_ALL=C uptime | python -c 'import sys;l = sys.stdin.readline().split(","); print " ".join(l[:-2])' | cut -d" " -f5-
 	else
-		LC_ALL=C uptime | python2 -c 'import sys;l = sys.stdin.readline().split(","); print " ".join(l[:-4])' | cut -d" " -f4-
+		LC_ALL=C uptime | python2 -c 'import sys;l = sys.stdin.readline().split(","); print " ".join(l[:-4])' | cut -d" " -f4- | /home/malte/bin/stripwhite
 	fi
 }
 info_wm() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 3))');'`
 	echo -n "WM${DOTS}: "
-	ps x | grep "X" >/dev/null || WM="None"
-	ps x | grep "awesome" >/dev/null && WM="Awesome"
-	ps x | grep "SystemUIServer" >/dev/null && WM="Aqua"
-	[ -z $WM ] && WM="Unknown"
+	WM=""
+	ps x | grep "X" >/dev/null | grep -v grep || WM="None"
+	ps x | grep "awesome" | grep -v grep >/dev/null && WM="Awesome"
+	ps x | grep "startkde" | grep -v grep >/dev/null && WM="KDE $(kde-open --version | grep KDE | cut -d\  -f2)"
+	ps x | grep "SystemUIServer" | grep -v grep >/dev/null && WM="Aqua"
+	#[ -z $WM -o $WM = "None" ] && WM="Unknown"
 	echo $WM
 }
 info_mem() {
