@@ -55,7 +55,7 @@ info_uptime() {
 	if [ `uname` == "Darwin" ]; then
 		LC_ALL=C uptime | python -c 'import sys;l = sys.stdin.readline().split(","); print " ".join(l[:-2])' | cut -d" " -f5-
 	else
-		LC_ALL=C uptime | python2 -c 'import sys;l = sys.stdin.readline().split(","); print " ".join(l[:-4])' | cut -d" " -f4- | /home/malte/bin/stripwhite
+		LC_ALL=C uptime | python2 -c 'import sys;l = sys.stdin.readline().split(","); print " ".join(l[:-4])' | cut -d" " -f4- | stripwhite
 	fi
 }
 info_wm() {
