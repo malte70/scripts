@@ -99,12 +99,12 @@ info_cpu() {
 	fi
 }
 info_env() {
-	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 6))');'`
-	[ -n $SHELL ] && echo "Shell${DOTS}: `basename $SHELL`"
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
-	[ -n $EDITOR ] && echo "Editor${DOTS}: `basename $EDITOR`"
+	[ -n $SHELL ] && echo "\$SHELL${DOTS}: `basename $SHELL` (`$SHELL --version`)"
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 8))');'`
-	[ -f "$BROWSER" ] && echo "Browser${DOTS}: `basename $BROWSER`"
+	[ -n $EDITOR ] && echo "\$EDITOR${DOTS}: `basename $EDITOR` (`$EDITOR --version | head -n1`)"
+	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 9))');'`
+	[ -f "$BROWSER" ] && echo "\$BROWSER${DOTS}: `basename $BROWSER` (`$BROWSER --version 2>/dev/null`)"
 }
 info_locale() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
