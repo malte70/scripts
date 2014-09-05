@@ -20,4 +20,9 @@ do
 	echo $IP
 done
 } | sort
-finger ip@ip.malte-bublitz.de | tail -n+2
+if which finger &>/dev/null
+then
+	finger ip@ip.malte-bublitz.de | tail -n+2
+else
+	curl http://ip.malte-bublitz.de; echo
+fi
