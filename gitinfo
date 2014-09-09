@@ -5,6 +5,7 @@
 #    for the zsh prompt.
 #
 
+[ ! -d $HOME/.cache/git-info ] && mkdir -p $HOME/.cache/git-info
 if [ ! -d .git ]; then
 	UPSTREAM="no git"
 else
