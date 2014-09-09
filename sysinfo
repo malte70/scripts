@@ -33,9 +33,16 @@ info_os() {
 			. /etc/lsb-release
 			echo -n $DISTRIB_DESCRIPTION
 		)
+	elif [ -f /etc/os-release ]; then
+		(
+			. /etc/os-release
+			echo -n $NAME
+		)
 	elif [ `uname` == "Darwin" ]; then
 		echo -n "Mac OS X "
 		python -c 'import platform; print platform.mac_ver()[0],' | tr -d "\n"
+	else
+		uname -o
 	fi
 	echo -n " "
 	uname -m
