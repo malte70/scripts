@@ -6,8 +6,13 @@
 # All rights reserved.
 #
 
-IPv4=$(ip addr show | grep inet\  |awk '{ print $2 }'  | cut -d/ -f1)
-IPv6=$(ip addr show | grep inet6\  |awk '{ print $2 }' | cut -d/ -f1)
+if which ip &>/dev/null; then
+	IP="`which ip` addr show"
+else
+	IP="`which ifconfig`"
+fi
+IPv4=$($IP | grep inet\  |awk '{ print $2 }'  | cut -d/ -f1)
+IPv6=$($IP | grep inet6\  |awk '{ print $2 }' | cut -d/ -f1 | cut -d% -f1)
 {
 for IP in $IPv4
 do
