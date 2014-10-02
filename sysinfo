@@ -14,11 +14,12 @@ display_help() {
 Reort options
 	-o	Operating System
 	-r	OS Kernel
+	-h	Platform/machine type
 	-n	Nodename/Hostname
 	-u	Uptime
 	-w	Window Manager
 	-m	Used/available RAM
-	-c CPU info
+	-c	CPU info
 	-e	Environment (Shell/Editor/Browser)
 	-l  Locale
 	-a	Display all information"
@@ -33,11 +34,22 @@ info_os() {
 			. /etc/lsb-release
 			echo -n $DISTRIB_DESCRIPTION
 		)
+	elif [ -f /etc/os-release ]; then
+		(
+			. /etc/os-release
+			echo -n $NAME
+		)
 	elif [ `uname` == "Darwin" ]; then
 		echo -n "Mac OS X "
 		python -c 'import platform; print platform.mac_ver()[0],' | tr -d "\n"
+	else
+		uname -o | tr -d "\n"
 	fi
-	echo -n " "
+	echo
+}
+info_platform() {
+	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 8))');'`
+	echo -n "Machine${DOTS}: "
 	uname -m
 }
 info_kernel() {
@@ -100,11 +112,11 @@ info_cpu() {
 }
 info_env() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
-	[ -n $SHELL ] && echo "\$SHELL${DOTS}: `basename $SHELL` (`$SHELL --version`)"
+	[ -n $SHELL ] && echo "\$SHELL${DOTS}: `basename $SHELL`"
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 8))');'`
-	[ -n $EDITOR ] && echo "\$EDITOR${DOTS}: `basename $EDITOR` (`$EDITOR --version | head -n1`)"
+	[ -n $EDITOR ] && echo "\$EDITOR${DOTS}: `basename $EDITOR`"
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 9))');'`
-	[ -f "$BROWSER" ] && echo "\$BROWSER${DOTS}: `basename $BROWSER` (`$BROWSER --version 2>/dev/null | head -n1`)"
+	[ -f "$BROWSER" ] && echo "\$BROWSER${DOTS}: `basename $BROWSER`"
 }
 info_locale() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
@@ -133,6 +145,11 @@ while getopts "Vhornuwmela" opt; do
 		r)
 			if [[ $DESC_COL_LENGTH -lt 7 ]]; then
 				DESC_COL_LENGTH=7
+			fi
+			;;
+		h)
+			if [[ $DESC_COL_LENGTH -lt 8 ]]; then
+				DESC_COL_LENGTH=8
 			fi
 			;;
 		n)
@@ -192,6 +209,9 @@ while getopts "Vhornuwmela" opt; do
 		r)
 			info_kernel
 			;;
+		h)
+			info_platform
+			;;
 		n)
 			info_nodename
 			;;
@@ -217,6 +237,7 @@ while getopts "Vhornuwmela" opt; do
 			export DESC_COL_LENGTH=9
 			info_os
 			info_kernel
+			info_platform
 			info_nodename
 			info_uptime
 			info_wm
