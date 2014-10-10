@@ -1,8 +1,10 @@
 #!/bin/bash
 # Use bash or zsh, sh won't work in many cases!
 
+export LC_ALL=C
+
 version_info() {
-	echo "sysinfo 20140831"
+	echo "sysinfo 20141010"
 	echo "Copyright (c) 2014 Malte Bublitz"
 }
 display_help() {
