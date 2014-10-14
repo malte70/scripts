@@ -45,6 +45,9 @@ info_os() {
 	elif [ `uname` == "Darwin" ]; then
 		echo -n "Mac OS X "
 		python -c 'import platform; print platform.mac_ver()[0],' | tr -d "\n"
+	elif grep GhostBSD /etc/motd &>/dev/null; then
+		echo -n "GhostBSD"
+		[ `uname -r` == "10.0-RELEASE" ] && echo -n " 4.0"
 	else
 		uname -o | tr -d "\n"
 	fi
