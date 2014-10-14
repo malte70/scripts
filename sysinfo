@@ -91,7 +91,7 @@ info_mem() {
 		top -l 1 | head -n 10 | grep PhysMem | cut -d"(" -f 2 | cut -d" " -f1 | cut -f1 | tr -d "M" | tr -d "\n"
 		echo -n " MB / "
 		{
-			top -l 1 | head -n 10 | grep PhysMem | awk '{ print $2 }' | tr -d "M\n"
+			top -l 1 | head -n 10 | grep PhysMem | awk '{ print $2 }' | sed 's/M//g;s/G/*1024/g' | tr -d "M\n"
 			echo -n "+"
 			top -l 1 | head -n 10 | grep PhysMem | awk '{ print $6 }' | tr -d "M"
 		} | bc | tr -d "\n"
