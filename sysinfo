@@ -1,6 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Use bash or zsh, sh won't work in many cases!
 
+LOCALE_OLD=$LC_ALL
 export LC_ALL=C
 
 version_info() {
@@ -44,6 +45,9 @@ info_os() {
 	elif [ `uname` == "Darwin" ]; then
 		echo -n "Mac OS X "
 		python -c 'import platform; print platform.mac_ver()[0],' | tr -d "\n"
+	elif grep GhostBSD /etc/motd &>/dev/null; then
+		echo -n "GhostBSD"
+		[ `uname -r` == "10.0-RELEASE" ] && echo -n " 4.0"
 	else
 		uname -o | tr -d "\n"
 	fi
@@ -97,9 +101,18 @@ info_mem() {
 		} | bc | tr -d "\n"
 		echo " MB"
 	else
-		free -m | grep buffers/cache | awk '{ print $3 "MB" }' | tr -d "\n"
+		FREE="free"
+		GREPSTRING="buffers/cache"
+		if [ `uname` == "FreeBSD" ]; then
+			# Use freecolor on BSD (available in sysutils/freecolor).
+			# freecolor gives an output similiar to GNU's free, but not exactly the same,
+			# therefore we need another string for grep.
+			FREE="freecolor -o"
+			GREPSTRING="^Mem"
+		fi
+		$FREE -m | grep $GREPSTRING | awk '{ print $3 "MB" }' | tr -d "\n"
 		echo -n " / "
-		free -m | grep ^Mem | awk '{ print $2 "MB" }'
+		$FREE -m | grep ^Mem | awk '{ print $2 "MB" }'
 	fi
 }
 info_cpu() {
@@ -107,6 +120,8 @@ info_cpu() {
 	echo -n "CPU${DOTS}: "
 	if [ `uname` == "Darwin" ]; then
 		sysctl -a | grep machdep.cpu.brand_string | cut -c 27-
+	elif [ `uname` == "FreeBSD" ]; then
+		sysctl -a | grep hw.model | cut -c 11-
 	else
 		# Output is translated, but for grep, we need the original one.
 		grep "model name" /proc/cpuinfo | uniq | cut -d: -f2- | stripwhite
@@ -122,7 +137,7 @@ info_env() {
 }
 info_locale() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
-	[ -n $LC_ALL ] && locale=$LC_ALL
+	[ -n $LOCALE_OLD ] && locale=$LOCALE_OLD # LC_ALL is overwritten, use the backup.
 	[ -n $LANG ] && locale=$LANG
 	[ -z $locale ] && locale=C
 	echo "Locale${DOTS}: $locale"
