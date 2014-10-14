@@ -8,12 +8,12 @@
 
 show_help() {
 	echo "myip"
-	echo "\tShows your current IP address"
+	echo -e "\tShows your current IP address"
 	echo "Usage: myip [-4|-6|-g|-a]"
-	echo "Options\n\t-4\tShow IPv4 address"
-	echo "\t-6\tShow IPv6 address"
-	echo "\t-g\tShow global IP using ip.malte-bublitz.de API"
-	echo "\t-a\tShow all informations at once"
+	echo -e "Options\n\t-4\tShow IPv4 address"
+	echo -e "\t-6\tShow IPv6 address"
+	echo -e "\t-g\tShow global IP using ip.malte-bublitz.de API"
+	echo -e "\t-a\tShow all informations at once"
 }
 SHOW_IPv4="no"
 SHOW_IPv6="no"
