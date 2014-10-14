@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Use bash or zsh, sh won't work in many cases!
 
 export LC_ALL=C
