@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Use bash or zsh, sh won't work in many cases!
 
+LOCALE_OLD=$LC_ALL
 export LC_ALL=C
 
 version_info() {
@@ -122,7 +123,7 @@ info_env() {
 }
 info_locale() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
-	[ -n $LC_ALL ] && locale=$LC_ALL
+	[ -n $LOCALE_OLD ] && locale=$LOCALE_OLD # LC_ALL is overwritten, use the backup.
 	[ -n $LANG ] && locale=$LANG
 	[ -z $locale ] && locale=C
 	echo "Locale${DOTS}: $locale"
