@@ -30,6 +30,8 @@ else
 				UPSTREAM="${REMOTE:19}:$BRANCH"
 			elif [[ "${REMOTE:0:24}" == "malte70@khaos.malte70.de" ]]; then
 				UPSTREAM="khaos/${REMOTE:34:-4}:$BRANCH"
+			elif [[ "${REMOTE:0:36}" == "git+ssh://khaos.malte70.de:/srv/git/" ]]; then
+				UPSTREAM="khaos/${REMOTE:36:-4}:$BRANCH"
 			elif [[ "${REMOTE:0:16}" == "git@repos.dma.do" ]]; then
 				UPSTREAM="dma.do/${REMOTE:17:-4}:$BRANCH"
 			else
