@@ -48,6 +48,8 @@ info_os() {
 	elif grep GhostBSD /etc/motd &>/dev/null; then
 		echo -n "GhostBSD"
 		[ `uname -r` == "10.0-RELEASE" ] && echo -n " 4.0"
+	elif [ `uname -o` == "Cygwin" ]; then
+		python -c 'import OSDetect; _i = OSDetect.OSInfo(); print _i.GetInfo()["Distribution"]' | tr -d "\n"
 	else
 		uname -o | tr -d "\n"
 	fi
@@ -60,7 +62,13 @@ info_platform() {
 }
 info_kernel() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
-	echo "Kernel${DOTS}: `uname -sr`"
+	echo -n "Kernel${DOTS}: "
+	if [ `uname -o` != "Cygwin" ]; then
+		uname -sr
+	else
+		echo -n "Windows NT "
+		python -c 'import OSDetect; _i = OSDetect.OSInfo(); print _i.GetInfo()["OSVersion"]'
+	fi
 }
 info_nodename() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 9))');'`
@@ -72,6 +80,8 @@ info_uptime() {
 	echo -n "Uptime${DOTS}: "
 	if [ `uname` == "Darwin" ]; then
 		LC_ALL=C uptime | python -c 'import sys;l = sys.stdin.readline().split(","); print " ".join(l[:-2])' | cut -d" " -f5-
+	elif [ `uname -o ` == Cygwin ]; then
+		python -c 'import OSDetect; _i = OSDetect.OSInfo(); print _i.GetInfo()["Uptime"]'
 	else
 		LC_ALL=C uptime | python2 -c 'import sys;l = sys.stdin.readline().split(","); print " ".join(l[:-4])' | cut -d" " -f4- | stripwhite
 	fi
@@ -133,7 +143,7 @@ info_env() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 8))');'`
 	[ -n $EDITOR ] && echo "\$EDITOR${DOTS}: `basename $EDITOR`"
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 9))');'`
-	[ -f "$BROWSER" ] && echo "\$BROWSER${DOTS}: `basename $BROWSER`"
+	[ -f "$BROWSER" ] && echo "\$BROWSER${DOTS}: `basename "$BROWSER"`"
 }
 info_locale() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
