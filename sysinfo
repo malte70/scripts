@@ -79,7 +79,7 @@ info_uptime() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
 	echo -n "Uptime${DOTS}: "
 	if [ `uname` == "Darwin" ]; then
-		LC_ALL=C uptime | python -c 'import sys;l = sys.stdin.readline().split(","); print " ".join(l[:-2])' | cut -d" " -f5-
+		LC_ALL=C uptime | python -c 'import sys;l = sys.stdin.readline().split(","); print " ".join(l[:-2])' | cut -d" " -f4-
 	elif [ `uname -o ` == Cygwin ]; then
 		python -c 'import OSDetect; _i = OSDetect.OSInfo(); print _i.GetInfo()["Uptime"]'
 	else
