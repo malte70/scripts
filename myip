@@ -1,23 +1,77 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Show current IP
 #
-# Copyright (c) 2013 Malte Bublitz
+# Copyright (c) 2013,2014 Malte Bublitz
 # All rights reserved.
 #
 
-IPv4=$(ip addr show | grep inet\  |awk '{ print $2 }'  | cut -d/ -f1)
-IPv6=$(ip addr show | grep inet6\  |awk '{ print $2 }' | cut -d/ -f1)
-{
-for IP in $IPv4
-do
-	echo $IP
-done
-} | sort
-{
-for IP in $IPv6
-do
-	echo $IP
-done
-} | sort
-finger ip@ip.malte-bublitz.de | tail -n+2
+show_help() {
+	echo "myip"
+	echo -e "\tShows your current IP address"
+	echo "Usage: myip [-4|-6|-g|-a]"
+	echo -e "Options\n\t-4\tShow IPv4 address"
+	echo -e "\t-6\tShow IPv6 address"
+	echo -e "\t-g\tShow global IP using ip.malte-bublitz.de API"
+	echo -e "\t-a\tShow all informations at once"
+}
+SHOW_IPv4="no"
+SHOW_IPv6="no"
+SHOW_GLOBAL="no"
+if [ $# -eq 0 ]; then
+	SHOW_IPv4="yes"
+	SHOW_IPv6="no"
+	SHOW_GLOBAL="no"
+else
+	if [ $1 == "--help" ]; then
+		show_help
+		exit 0
+	elif [ $1 == "-4" ]; then
+		SHOW_IPv4="yes"
+	elif [ $1 == "-6" ]; then
+		SHOW_IPv6="yes"
+	elif [ $1 == "-g" ]; then
+		SHOW_GLOBAL="yes"
+	elif [ $1 == "-a" ]; then
+		SHOW_IPv4="yes"
+		SHOW_IPv6="yes"
+		SHOW_GLOBAL="yes"
+	fi
+fi
+
+# Detect ip info tool
+if which ip &>/dev/null; then
+	IP="`which ip` addr show"
+else
+	IP="`which ifconfig`"
+fi
+
+# IPv4
+if [ $SHOW_IPv4 == "yes" ]; then
+	IPv4=$($IP | grep inet\  |awk '{ print $2 }'  | cut -d/ -f1)
+	{
+		for IP in $IPv4; do
+			echo $IP
+		done
+	} | sort | grep -v "127.0.0.1"
+fi
+
+# IPv6
+if [ $SHOW_IPv6 == "yes" ]; then
+	IPv6=$($IP | grep inet6\  |awk '{ print $2 }' | cut -d/ -f1 | cut -d% -f1)
+	{
+		for IP in $IPv6; do
+			echo $IP
+		done
+	} | sort | grep -v "::1"
+fi
+
+# Global IP
+if [ $SHOW_GLOBAL == "yes" ]; then
+	if which finger &>/dev/null
+	then
+		finger ip@ip.malte-bublitz.de | tail -n+2
+	else
+		curl http://ip.malte-bublitz.de; echo
+	fi
+fi

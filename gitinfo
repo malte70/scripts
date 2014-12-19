@@ -1,11 +1,12 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 #
 # git info
 #    Shows information about a git repository
 #    for the zsh prompt.
 #
 
-if [ ! -d .git ]; then
+[ ! -d $HOME/.cache/git-info ] && mkdir -p $HOME/.cache/git-info
+if ! git rev-parse --git-dir &>/dev/null; then
 	UPSTREAM="no git"
 else
 	# Test internet connection, needed for the git remote command.
@@ -26,9 +27,13 @@ else
 			if [[ "${REMOTE:0:14}" == "git@github.com" ]]; then
 				UPSTREAM="${REMOTE:15:-4}:$BRANCH"
 			elif [[ "${REMOTE:0:19}" == "https://github.com/" ]]; then
-				UPSTREAM="${REMOTE:19}:$BRANCH"
+				UPSTREAM="`echo ${REMOTE:19} | sed 's/.git//g'`:$BRANCH"
 			elif [[ "${REMOTE:0:24}" == "malte70@khaos.malte70.de" ]]; then
 				UPSTREAM="khaos/${REMOTE:34:-4}:$BRANCH"
+			elif [[ "${REMOTE:0:36}" == "git+ssh://khaos.malte70.de:/srv/git/" ]]; then
+				UPSTREAM="khaos/${REMOTE:36:-4}:$BRANCH"
+			elif [[ "${REMOTE:0:16}" == "git@repos.dma.do" ]]; then
+				UPSTREAM="dma.do/${REMOTE:17:-4}:$BRANCH"
 			else
 				UPSTREAM="${REMOTE}:$BRANCH"
 			fi

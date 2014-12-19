@@ -1,0 +1,38 @@
+#!/usr/bin/env python
+#
+from __future__ import print_function
+import sys
+
+if len(sys.argv)<2:
+	print("Usage: dnsresolver <DNSName>")
+	sys.exit(1)
+
+if sys.argv[1] == "-v":
+	VERBOSE=True
+	del sys.argv[1]
+else:
+	VERBOSE=False
+
+DOMAIN = sys.argv[1]
+
+if VERBOSE:
+	print("Trying to resolve "+DOMAIN+"...")
+
+import dns.resolver
+res = dns.resolver.Resolver()
+try:
+	answer = res.query(DOMAIN)
+	is_answer = False
+	for line in answer.response.to_text().split("\n"):
+		if line == ";ANSWER":
+			is_answer = True
+			continue
+		if is_answer:
+			if VERBOSE:
+				print(DOMAIN+" IN A "+line.split(" ")[4])
+			else:
+				print(line.split(" ")[4])
+			is_answer = False
+except dns.resolver.NXDOMAIN:
+	print("Could not resolve hostname "+DOMAIN, file=sys.stderr)
+	sys.exit(1)

@@ -13,8 +13,9 @@
 # 
 
 import platform
+from getpass import getuser
 
-commands_allowed = ("", "exit", "logout")
+commands_allowed = ("", "exit", "logout", "help", "whoami", "hostname", "pwd", "uname")
 command = ""
 
 print """
@@ -25,10 +26,28 @@ Type exit<ENTER> to exit.
 
 try:
 	while command != "exit":
-		print "> ",
+		print "$",
 		command = raw_input()
 		if command == "logout":
 			command = "exit"
+		if command == "help":
+			print """Minimal Shell Help
+Commands:
+    whoami
+    hostname
+    pwd
+    uname
+    help
+    logout/exit
+"""
+		if command == "whoami":
+			print getuser()
+		if command == "hostname":
+			print platform.uname()[1]
+		if command == "pwd":
+			print "/var/empty"
+		if command == "uname":
+			print platform.uname()[0]+" "+platform.uname()[1]+" "+platform.uname()[2]
 		if not command in commands_allowed:
 			print "You may not execute commands!"
 			print "-minishell: "+command.split(" ")[0]+": Command not found."
