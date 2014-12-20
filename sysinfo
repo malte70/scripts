@@ -152,7 +152,7 @@ fi
 DESC_COL_LENGTH=2
 
 # parse arguments once to get $DESC_COL_LENGTH
-while getopts "Vhornuwmela" opt; do
+while getopts "Vhornuwmelac" opt; do
 	case $opt in
 		o)
 			if [[ $DESC_COL_LENGTH -lt 3 ]]; then
@@ -210,7 +210,7 @@ done
 OPTIND=1
 
 # parse arguments again, and now, display the information.
-while getopts "Vhornuwmela" opt; do
+while getopts "Vhornuwmelac" opt; do
 	case $opt in
 		V)
 			version_info
