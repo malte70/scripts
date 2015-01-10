@@ -91,6 +91,7 @@ info_wm() {
 	echo -n "WM${DOTS}: "
 	WM=""
 	ps x | grep "X" >/dev/null | grep -v grep || WM="None"
+	ps x | grep "mate-session" | grep -v grep >/dev/null && WM="`mate-about --version`"
 	ps x | grep "awesome" | grep -v grep >/dev/null && WM="Awesome"
 	ps x | grep "startkde" | grep -v grep >/dev/null && WM="KDE $(kde-open --version | grep KDE | cut -d\  -f2)"
 	ps x | grep "SystemUIServer" | grep -v grep >/dev/null && WM="Aqua"
