@@ -1,0 +1,25 @@
+#!/bin/zsh
+
+DIALOG=`which matedialog`
+SYSINFO=`which sysinfo`
+
+TMPFILE="/tmp/sysinfo.$$"
+
+touch $TMPFILE
+(
+	echo "Betriebssystem: $(uname -o)"
+	echo "Kernel: Linux $(uname -r)"
+	echo "Distribution: $(lsb_release -d | cut -d"	" -f2)"
+	echo "Plattform: $(uname -m)"
+	echo "Computername: $(hostname -f)"
+	echo "CPU-Typ: $(LC_ALL=C lscpu |grep Model\ name | cut -c24- | sed -r 's/\s+/ /g')"
+	echo "CPU-Geschwindigkeit: $(LC_ALL=C lscpu | grep -E '^CPU(\(s| MHz)' | cut -c 24- | tr "\n" "x" | sed -r 's/x/×/;s/\.([0-9]+)x$/ MHz/')"
+	echo "Installierter Arbeitsspeicher:$(lshw -c memory 2>/dev/null |grep size | cut -d: -f2)"
+) > $TMPFILE
+
+matedialog \
+	--text-info \
+	--filename=$TMPFILE \
+	--title=`basename $0`
+
+rm $TMPFILE
