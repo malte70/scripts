@@ -17,7 +17,7 @@ display_help() {
 Reort options
 	-o	Operating System
 	-r	OS Kernel
-	-h	Platform/machine type
+	-p	Platform/machine type
 	-n	Nodename/Hostname
 	-u	Uptime
 	-w	Window Manager
@@ -90,6 +90,7 @@ info_wm() {
 	echo -n "WM${DOTS}: "
 	WM=""
 	ps x | grep "X" >/dev/null | grep -v grep || WM="None"
+	ps x | grep "mate-session" | grep -v grep >/dev/null && WM="`mate-about --version`"
 	ps x | grep "awesome" | grep -v grep >/dev/null && WM="Awesome"
 	ps x | grep "startkde" | grep -v grep >/dev/null && WM="KDE $(kde-open --version | grep KDE | cut -d\  -f2)"
 	ps x | grep "SystemUIServer" | grep -v grep >/dev/null && WM="Aqua"
@@ -161,7 +162,7 @@ fi
 DESC_COL_LENGTH=2
 
 # parse arguments once to get $DESC_COL_LENGTH
-while getopts "Vhornuwmelac" opt; do
+while getopts "Vhornuwmeplac" opt; do
 	case $opt in
 		o)
 			if [[ $DESC_COL_LENGTH -lt 3 ]]; then
@@ -171,6 +172,11 @@ while getopts "Vhornuwmelac" opt; do
 		r)
 			if [[ $DESC_COL_LENGTH -lt 7 ]]; then
 				DESC_COL_LENGTH=7
+			fi
+			;;
+		p)
+			if [[ $DESC_COL_LENGTH -lt 8 ]]; then
+				DESC_COL_LENGTH=8
 			fi
 			;;
 		h)
@@ -219,7 +225,7 @@ done
 OPTIND=1
 
 # parse arguments again, and now, display the information.
-while getopts "Vhornuwmelac" opt; do
+while getopts "Vhornuwmpelac" opt; do
 	case $opt in
 		V)
 			version_info
@@ -235,7 +241,7 @@ while getopts "Vhornuwmelac" opt; do
 		r)
 			info_kernel
 			;;
-		h)
+		p)
 			info_platform
 			;;
 		n)
