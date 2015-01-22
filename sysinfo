@@ -63,12 +63,11 @@ info_platform() {
 info_kernel() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
 	echo -n "Kernel${DOTS}: "
-	if [ `uname -o` != "Cygwin" ]; then
-		uname -sr
-	else
+	uname -o &>/dev/null && [ `uname -o` == "Cygwin" ] && {
 		echo -n "Windows NT "
 		python -c 'import OSDetect; _i = OSDetect.OSInfo(); print _i.GetInfo()["OSVersion"]'
-	fi
+	} && exit
+	uname -sr
 }
 info_nodename() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 9))');'`
