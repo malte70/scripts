@@ -1,37 +1,73 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 
-import sys
+PROMPT="(pycalc)% "
 
+
+import sys
+import os
 import socket
+import traceback
 
 # this is a calculator, so this might be needed.
 from math import *
 
 def c2re(z):
-	return "r="+str(sqrt(z.real*z.real + z.imag * z.imag)) + "; e="+str(atan(z.imag / z.real))
+    return "r="+str(sqrt(z.real*z.real + z.imag * z.imag)) + "; e="+str(atan(z.imag / z.real))
 
-sys.stdout.write("[H[2J]0;pycalc (malte70@"+socket.gethostname()+")")
-cmd = ""
-lastresult = 0
+# Python 2 backwards compatibility
 try:
-	try:
-		while True:
-			print "(pycalc)%",
-			cmd = raw_input()
-			#cmd = cmd.replace("#", lastresult)
-			if cmd.startswith("*"): cmd = "print "+cmd[1:]
-			if not cmd in ["quit", "exit", ""]:
-				if cmd == "clear":
-					sys.stdout.write("[H[2J")
-                                else:
-					exec(cmd)
-			if cmd in ["quit", "exit"]:
-				break
-	except KeyboardInterrupt:
-		print ""
-		sys.exit(0)
-except EOFError:
-	print ""
-	sys.exit(0)
+    input = raw_input
+except NameError:
+    pass
+
+def clear():
+    if os.environ["TERM"] == "dump":
+        print("Dump Terminal, escape sequences not supported.")
+        return False
+    else:
+        sys.stdout.write("[H[2J")
+
+class Pycalc(object):
+    prompt = "% "
+    prompt_termtitle = ""
+    def __init__(self, prompt = None):
+        if not os.environ["TERM"] in ["linux", "dump"]:
+            self.prompt_termtitle = "[H[2J]0;pycalc (malte70@"+socket.gethostname()+")"
+        if prompt != None:
+            self.prompt = prompt
+
+    def run(self):
+        doExit = False
+        cmd = ""
+        lastresult = 0
+        print(self.prompt_termtitle, end="")
+        while not doExit:
+            try:
+                print(self.prompt, end="")
+                cmd = input()
+                #cmd = cmd.replace("#", lastresult)
+                if cmd.startswith("*"): cmd = "print("+cmd[1:]+")"
+                if not cmd in ["quit", "exit", ""]:
+                    try:
+                        exec(cmd)
+                    except (KeyboardInterrupt, EOFError):
+                        raise
+                    except Exception as e:
+                        print(traceback.format_exc())
+                doExit = cmd in ["quit", "exit"]
+            except KeyboardInterrupt:
+                print("")
+                sys.exit(0)
+            except EOFError:
+                print("")
+                sys.exit(0)
+
+def main():
+    global PROMPT
+    app = Pycalc(PROMPT)
+    app.run()
+
+if __name__ == "__main__":
+    main()
