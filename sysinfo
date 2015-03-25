@@ -72,7 +72,8 @@ info_kernel() {
 info_nodename() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 9))');'`
 	echo -n "Hostname${DOTS}: "
-	hostname -f
+	hostname -f 2>/dev/null
+	[[ $? -ne 0 ]] && hostname
 }
 info_uptime() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
@@ -133,8 +134,15 @@ info_cpu() {
 	elif [ `uname` == "FreeBSD" ]; then
 		sysctl -a | grep hw.model | cut -c 11-
 	else
-		# Output is translated, but for grep, we need the original one.
+		if grep "S390" /proc/cpuinfo &>/dev/null
+		then
+			lscpu | grep "Vendor ID" | cut -c24- | tr "\n" " "
+			echo -n "(CPU Type "
+			grep "^processor 0" /proc/cpuinfo | cut -d= -f4 | stripwhite | tr -d "\n"
+			echo ")"
+		else
 		grep "model name" /proc/cpuinfo | uniq | cut -d: -f2- | stripwhite
+		fi
 	fi
 }
 info_env() {
