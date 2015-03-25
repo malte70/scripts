@@ -1,0 +1,59 @@
+#!/usr/bin/zsh
+#
+# dvd2ogv
+#    Rips a DVD Movie to an Ogg file.
+#    Interactive script.
+#
+# Copyright (c) 2013-2015 Malte Bublitz
+# All rights reserved.
+# 
+
+# configuration
+DVDDEVICE="/dev/sr0"
+TARGETDIR="/mnt/nas/videos/Filme"
+# configuration end
+
+RUNCONTEXT="dvdrip"
+export RUNCONTEXT
+
+echo "Welcome to dvdrip."
+echo
+
+# Collect some information from the user
+echo "For the output file name: What's the name of the movie?"
+echo -n "> "; read MOVIENAME
+echo "And, when did it appear in the cinemas?"
+echo -n "> "; read MOVIEYEAR
+FILENAME_VOB="$MOVIENAME ($MOVIEYEAR).vob"
+FILENAME_OGV="$MOVIENAME ($MOVIEYEAR).ogv"
+echo "Now, You have to find the correct track on the DVD."
+echo "Sometimes, there are many empty tracks to avoid"
+echo "automatic detection of the correct one, sometimes"
+echo "even a track longer than the actual movie."
+echo "I will show you an overview over all tracks."
+echo "If this is still not enough, you can use VLC to"
+echo "play every track and detect the correct one this way."
+echo
+echo "Now press ENTER to see the output of lsdvd in a pager."
+read
+lsdvd $DVDDEVICE | less
+echo "Now, what's the correct track number please?"
+echo -n "> "; read TRACKID
+
+# Give the user an overview of what will be done
+echo "I'm ready now. Here is an overview over what will be"
+echo "done now:"
+echo "The movie at track $TRACKID of the DVD in $DVDDEVICE"
+echo "will be saved as an ogv file inside $TARGETDIR,"
+echo "whereas the file name whould be $FILENAME_OGV."
+echo 
+echo "Starting dvd2vob..."
+dvd2vob $DVDDEVICE $TRACKID "$TARGETDIR/$FILENAME_VOB"
+echo "Starting vob2ogv..."
+vob2ogv "$TARGETDIR/$FILENAME_VOB" "$TARGETDIR/$FILENAME_OGV"
+echo "Deleting space wasting .vob file..."
+rm "$TARGETDIR/$FILENAME_VOB"
+echo "Everything done! Your DVD Rip is located at:"
+echo $TARGETDIR/$FILENAME_OGV
+echo
+
