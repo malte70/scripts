@@ -20,6 +20,12 @@ class BatteryStatus(object):
     def __init__(self):
         self.readInfo()
         
+    def checkBatteryIsAvailable():
+        current_os = OSDetect.info["OS"]
+        if current_os == "Linux":
+            dname_bat0   = "/sys/class/power_supply/BAT0"
+        return os.path.exists(dname_bat0)
+        
     def readInfo(self):
         current_os = OSDetect.info["OS"]
         if current_os == "Linux":
@@ -32,7 +38,10 @@ class BatteryStatus(object):
                 self._now             = int(open(fname_now).read())
                 self._full            = int(open(fname_full).read())
                 self._power           = int(open(fname_power).read())
-                self._hours_remaining = round(float(self._now)/float(self._power), 2)
+                if self._power > 1:
+                    self._hours_remaining = round(float(self._now)/float(self._power), 2)
+                else:
+                    self._hours_remaining = 0.0
                 self._isCharging      = (open(fname_status).read().strip() == "Charging")
             except IOError as e:
                 if not os.path.exists("/sys"):
@@ -71,11 +80,18 @@ class BatteryStatus(object):
         return self._isCharging
 
 def main():
+    if not BatteryStatus.checkBatteryIsAvailable():
+        print("No battery found.")
+        sys.exit(1)
+    
     status = BatteryStatus()
     output_mode = "human-readable"
     if len(sys.argv) >= 2:
         if sys.argv[1] == "-v":
             output_mode = "everything"
+        elif sys.argv[1] == "-g" or sys.argv[1] == "--get":
+            output_mode = "value"
+            output_value = sys.argv[2]
         elif sys.argv[1] == "--help":
             print("Usage: "+sys.argv[0]+" [-h]")
             sys.exit(0)
@@ -89,13 +105,32 @@ def main():
     remaining_minutes     = int((status.getHoursRemaining()-remaining_hours)*60)
     remaining_ten_minutes = int(remaining_minutes/10)*10
     if output_mode == "everything":
-        output_data.append("IS_CHARGING = " + str(status.getIsCharging()))
-        output_data.append("CAPACITY_CURRENT = " + str(status.getChargedCurrent()))
-        output_data.append("CAPACITY_FULL = " + str(status.getChargedFull()))
-        output_data.append("CAPACITY_PERCENT = " + str(status.getChargedPercent()))
-        output_data.append("HOURS_REMAINING = " + str(remaining_hours))
-        output_data.append("MINUTES_REMAINING = " + str(remaining_minutes))
+        output_data.append("IS_CHARGING           = " + str(status.getIsCharging()))
+        output_data.append("CAPACITY_CURRENT      = " + str(status.getChargedCurrent()))
+        output_data.append("CAPACITY_FULL         = " + str(status.getChargedFull()))
+        output_data.append("CAPACITY_PERCENT      = " + str(status.getChargedPercent()))
+        output_data.append("HOURS_REMAINING       = " + str(remaining_hours))
+        output_data.append("MINUTES_REMAINING     = " + str(remaining_minutes))
         output_data.append("TEN_MINUTES_REMAINING = " + str(remaining_ten_minutes))
+    elif output_mode == "value":
+        if output_value.upper() == "IS_CHARGING":
+            output_data.append(str(status.getIsCharging()))
+        elif output_value.upper() == "CAPACITY_CURRENT":
+            output_data.append(str(status.getChargedCurrent()))
+        elif output_value.upper() == "CAPACITY_FULL":
+            output_data.append(str(status.getChargedFull()))
+        elif output_value.upper() == "CAPACITY_PERCENT":
+            output_data.append(str(status.getChargedPercent()))
+        elif output_value.upper() == "HOURS_REMAINING":
+            output_data.append(str(remaining_hours))
+        elif output_value.upper() == "MINUTES_REMAINING":
+            output_data.append(str(remaining_minutes))
+        elif output_value.upper() == "TEN_MINUTES_REMAINING":
+            output_data.append(str(remaining_ten_minutes))
+        else:
+            print("Value unknown. Use one of the keys in", file=sys.stderr)
+            print("   "+sys.argv[0]+" -v", file=sys.stderr)
+            sys.exit(1)
     elif output_mode == "human-readable":
         msg  = "Battery is "
         msg += str(ceil(status.getChargedPercent()))
