@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Minimal Shell
@@ -12,26 +12,32 @@
 # See LICENSE for details.
 # 
 
+# Backwards compatibility with Python 2
+try:
+    input = raw_input
+except NameError:
+    pass
+
 import platform
 from getpass import getuser
 
-commands_allowed = ("", "exit", "logout", "help", "whoami", "hostname", "pwd", "uname")
-command = ""
-
-print """
+def main():
+    commands_allowed = ("", "exit", "logout", "help", "whoami", "hostname", "pwd", "uname")
+    command = ""
+    print("""
 This is Minimal Shell on node """+platform.node()+""".
 
 Type exit<ENTER> to exit.
-"""
-
-try:
-	while command != "exit":
-		print "$",
-		command = raw_input()
-		if command == "logout":
-			command = "exit"
-		if command == "help":
-			print """Minimal Shell Help
+""")
+    
+    try:
+        while command != "exit":
+            print("$ ",end="")
+            command = input()
+            if command == "logout":
+                command = "exit"
+            elif command == "help":
+                print("""Minimal Shell Help
 Commands:
     whoami
     hostname
@@ -39,19 +45,21 @@ Commands:
     uname
     help
     logout/exit
-"""
-		if command == "whoami":
-			print getuser()
-		if command == "hostname":
-			print platform.uname()[1]
-		if command == "pwd":
-			print "/var/empty"
-		if command == "uname":
-			print platform.uname()[0]+" "+platform.uname()[1]+" "+platform.uname()[2]
-		if not command in commands_allowed:
-			print "You may not execute commands!"
-			print "-minishell: "+command.split(" ")[0]+": Command not found."
-except EOFError:
-	print "<EOF>"
+""")
+            elif command == "whoami":
+                print(getuser())
+            elif command == "hostname":
+                print(platform.uname()[1])
+            elif command == "pwd":
+                print("/var/empty")
+            elif command == "uname":
+                print(platform.uname()[0]+" "+platform.uname()[1]+" "+platform.uname()[2])
+            if not command in commands_allowed:
+                print("You may not execute commands!")
+                print("-minishell: "+command.split(" ")[0]+": Command not found.")
+    except EOFError:
+        print("<EOF>")
+    print("Good bye.")
 
-print "Good bye."
+if __name__ == "__main__":
+    main()

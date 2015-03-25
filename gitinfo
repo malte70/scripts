@@ -28,10 +28,12 @@ else
 				UPSTREAM="${REMOTE:15:-4}:$BRANCH"
 			elif [[ "${REMOTE:0:19}" == "https://github.com/" ]]; then
 				UPSTREAM="`echo ${REMOTE:19} | sed 's/.git//g'`:$BRANCH"
-			elif [[ "${REMOTE:0:16}" == "git@repos.dma.do" ]]; then
-				UPSTREAM="dma.do/${REMOTE:17:-4}:$BRANCH"
 			elif [[ "${REMOTE:0:15}" == "git@git.mcbx.de" ]]; then
-				UPSTREAM="mcbx.de/${REMOTE:16:-4}:$BRANCH"
+				UPSTREAM="git.mcbx.de/`echo ${REMOTE:16} | sed 's/.git//g'`:$BRANCH"
+			elif [[ "${REMOTE:0:16}" == "git@repos.dma.do" ]]; then
+				UPSTREAM="repos.dma.do/${REMOTE:17:-4}:$BRANCH"
+			elif [[ "${REMOTE:0:31}" == "ssh://storage@abyss.mcbx.de:22/" ]]; then
+				UPSTREAM="SparkleShare:${REMOTE:44}"
 			else
 				UPSTREAM="${REMOTE}:$BRANCH"
 			fi

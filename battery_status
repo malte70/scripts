@@ -1,0 +1,160 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
+
+# These two are always needed
+import os
+import sys
+# For multi-platform support
+import OSDetect
+# To round percent value to 2 decimal places only
+from math import ceil
+
+class BatteryStatus(object):
+    _now             = 0
+    _full            = 0
+    _power           = 0
+    _hours_remaining = 0
+    _percent         = 0
+    _isCharging      = False
+    
+    def __init__(self):
+        self.readInfo()
+        
+    def checkBatteryIsAvailable():
+        current_os = OSDetect.info["OS"]
+        if current_os == "Linux":
+            dname_bat0   = "/sys/class/power_supply/BAT0"
+        return os.path.exists(dname_bat0)
+        
+    def readInfo(self):
+        current_os = OSDetect.info["OS"]
+        if current_os == "Linux":
+            dname_bat0   = "/sys/class/power_supply/BAT0"
+            fname_status = os.path.join(dname_bat0, "status")
+            fname_now    = os.path.join(dname_bat0, "energy_now")
+            fname_full   = os.path.join(dname_bat0, "energy_full")
+            fname_power  = os.path.join(dname_bat0, "power_now")
+            try:
+                self._now             = int(open(fname_now).read())
+                self._full            = int(open(fname_full).read())
+                self._power           = int(open(fname_power).read())
+                if self._power > 1:
+                    self._hours_remaining = round(float(self._now)/float(self._power), 2)
+                else:
+                    self._hours_remaining = 0.0
+                self._isCharging      = (open(fname_status).read().strip() == "Charging")
+            except IOError as e:
+                if not os.path.exists("/sys"):
+                    print("sysfs doesn't seem to be mounted...")
+                    print("On modern kernels, you might want to try:")
+                    print("   mount -t sysfs sys /sys")
+                elif not os.path.exists(dname_bat0):
+                    print("Can't find Battery 0 in /sys.")
+                    print("I expected a directory named "+dname_bat0+", but it doesn't exist.")
+                    print("Are you sure you have a battery in your computer and/or aren't on a")
+                    print("Desktop PC system without a battery?")
+                else:
+                    print("Error while trying to read battery status from /sys:")
+                    print(e)
+                sys.exit(2)
+        else:
+            raise Exception("Not available on your platform ("+current_os+")")
+        self._percent = ceil(float(self._now)/float(self._full)*10000)/100
+        
+    def getChargedCurrent(self):
+        return self._now
+        
+    def getChargedFull(self):
+        return self._full
+        
+    def getChargedPercent(self):
+        return self._percent
+        
+    def getCurrentPower(self):
+        return self._power
+        
+    def getHoursRemaining(self):
+        return self._hours_remaining
+        
+    def getIsCharging(self):
+        return self._isCharging
+
+def main():
+    if not BatteryStatus.checkBatteryIsAvailable():
+        print("No battery found.")
+        sys.exit(1)
+    
+    status = BatteryStatus()
+    output_mode = "human-readable"
+    if len(sys.argv) >= 2:
+        if sys.argv[1] == "-v":
+            output_mode = "everything"
+        elif sys.argv[1] == "-g" or sys.argv[1] == "--get":
+            output_mode = "value"
+            output_value = sys.argv[2]
+        elif sys.argv[1] == "--help":
+            print("Usage: "+sys.argv[0]+" [-h]")
+            sys.exit(0)
+        else:
+            print("Unknown option: "+sys.argv[1])
+            print("Usage: "+sys.argv[0]+" [-h]")
+            sys.exit(1)
+    
+    output_data           = []
+    remaining_hours       = int(status.getHoursRemaining())
+    remaining_minutes     = int((status.getHoursRemaining()-remaining_hours)*60)
+    remaining_ten_minutes = int(remaining_minutes/10)*10
+    if output_mode == "everything":
+        output_data.append("IS_CHARGING           = " + str(status.getIsCharging()))
+        output_data.append("CAPACITY_CURRENT      = " + str(status.getChargedCurrent()))
+        output_data.append("CAPACITY_FULL         = " + str(status.getChargedFull()))
+        output_data.append("CAPACITY_PERCENT      = " + str(status.getChargedPercent()))
+        output_data.append("HOURS_REMAINING       = " + str(remaining_hours))
+        output_data.append("MINUTES_REMAINING     = " + str(remaining_minutes))
+        output_data.append("TEN_MINUTES_REMAINING = " + str(remaining_ten_minutes))
+    elif output_mode == "value":
+        if output_value.upper() == "IS_CHARGING":
+            output_data.append(str(status.getIsCharging()))
+        elif output_value.upper() == "CAPACITY_CURRENT":
+            output_data.append(str(status.getChargedCurrent()))
+        elif output_value.upper() == "CAPACITY_FULL":
+            output_data.append(str(status.getChargedFull()))
+        elif output_value.upper() == "CAPACITY_PERCENT":
+            output_data.append(str(status.getChargedPercent()))
+        elif output_value.upper() == "HOURS_REMAINING":
+            output_data.append(str(remaining_hours))
+        elif output_value.upper() == "MINUTES_REMAINING":
+            output_data.append(str(remaining_minutes))
+        elif output_value.upper() == "TEN_MINUTES_REMAINING":
+            output_data.append(str(remaining_ten_minutes))
+        else:
+            print("Value unknown. Use one of the keys in", file=sys.stderr)
+            print("   "+sys.argv[0]+" -v", file=sys.stderr)
+            sys.exit(1)
+    elif output_mode == "human-readable":
+        msg  = "Battery is "
+        msg += str(ceil(status.getChargedPercent()))
+        msg += " % charged, currently "
+        if not status.getIsCharging():
+            msg += "not "
+        msg += "charging."
+        output_data.append(msg)
+        if remaining_hours > 0 or remaining_ten_minutes > 0:
+            msg  = "Approx. "
+            if remaining_hours > 0:
+                msg += str(int(status.getHoursRemaining()))
+                msg += " hours"
+            if remaining_hours > 0 and remaining_ten_minutes > 0:
+                msg += " and "
+            if remaining_ten_minutes > 0:
+                msg += str(remaining_ten_minutes)
+                msg += " minutes"
+            msg += " remaining."
+        else:
+            msg  = "Under 10 minutes remaining!"
+        output_data.append(msg)
+    for l in output_data:
+        print(l)
+
+if __name__ == "__main__":
+    main()
