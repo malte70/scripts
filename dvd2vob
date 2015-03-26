@@ -1,0 +1,78 @@
+#!/usr/bin/zsh
+#
+# dvd2vob
+#    Reads out a DVD and dumps the content to a .vob file.
+#
+# Copyright (c) 2013 Malte Bublitz
+# All rights reserved.
+# 
+
+# helper functions
+usage() {
+	echo
+	echo "Usage: $1 [Device] [Track-ID] [Output file]"
+	echo "   Device = DVD device, should be either the symlink /dev/dvd"
+	echo "   or something matching /dev/sr?"
+	echo "   Track-ID = ID of the track that contains the movie. Use lsdvd to find it."
+	echo "   Output file = File, where the dump is saved to. Should have .vob suffix."
+	echo
+}
+exit_usage() {
+	usage $1
+	exit 1
+}
+exit_file_exists() {
+	echo "dvd2vob: ERROR: Output file \"$1\" alreaddy exists! Aborting." >&2
+	exit 1
+}
+exit_mplayer_unavailable() {
+	echo "dvd2vob: FATAL: mplayer not in PATH." >&2
+	exit 1
+}
+
+# Check arguments
+[ $# -eq 3 ] || exit_usage $0        # test if 3 arguments are passed
+[ -b "$1" ] || exit_usage $0         # test if device really is a block special device
+[ ! -e "$3" ] || exit_file_exists $3 # test it output file is not already there
+
+# check if mplayer is available
+which mplayer &>/dev/null || exit_mplayer_unavailable
+
+# set up environment
+DEVICE=$1
+TRACK=$2
+OUTPUT=$3
+
+# if everything is correct, tell the user that that this could take a while,
+# and give him a chance to abort it.
+echo "dvd2vob: everything fine."
+if [ "$RUNCONTEXT" \== "dvdrip" ]; then
+	true
+else
+	echo "Everything looks fine, and therefore dvd2vob is"
+	echo "ready to start dumping."
+	echo 
+	echo "Overview of what should be done:"
+	echo " Device where the DVD disk is:"
+	echo "  -> $DEVICE"
+	echo "ID of the DVD track to dump:"
+	echo "  -> $TRACK"
+	echo "Output file name:"
+	echo "  -> $OUTPUT"
+	echo
+	echo "The actual dump can take a long time. This is the last"
+	echo "chance to abort the dump. Press Ctrl+C to abort,"
+	echo "otherwise, press ENTER to continue."
+	echo 
+	read
+fi
+
+# start actual dump
+echo "dvd2vob: Starting dump."
+if [ "$RUNCONTEXT" \== "dvdrip" ]; then
+	mplayer dvd://$TRACK -dvd-device $DEVICE -dumpstream -dumpfile $OUTPUT >/dev/null || exit 1
+else
+	mplayer dvd://$TRACK -dvd-device $DEVICE -dumpstream -dumpfile $OUTPUT || exit 1
+fi
+echo "dvd2vob: done."
+

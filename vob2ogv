@@ -1,0 +1,31 @@
+#!/usr/bin/zsh
+#
+# vob2ogv
+#    Converts a DVD dump (.vob) to an Ogg Vorbis/Theora-File.
+#
+# Copyright (c) 2013 Malte Bublitz.
+#
+
+usage() {
+	echo "Usage: $0 input.vob output.ogv"
+	exit 1
+}
+
+[ -z "$1" ] && usage
+[ -f "$1" -a "x${1: -4}" \== "x.vob" ] || usage
+
+if ffmpeg -version &>/dev/null; then
+	true
+else
+	echo "Fatal error: ffmpeg not installed or not in PATH."
+	exit 1
+fi
+
+echo "Converting $1 and saving it in $2."
+echo "This can take a very long time for full movies, so press Ctrl+C now"
+echo "to abort. Otherwise, simply press ENTER."
+read
+
+ffmpeg -i $1 -acodec libvorbis -ac 2 -ab 96k -ar 44100 -b 750k $2 || exit 1
+
+echo "Done."
