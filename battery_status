@@ -28,6 +28,8 @@ class BatteryStatus(object):
         
     def readInfo(self):
         current_os = OSDetect.info["OS"]
+        if current_os == "Linux" and OSDetect.info["OSVersion"].split(".")[0] == "4":
+            raise Exception("Linux Kernel 4 not supported yet.")
         if current_os == "Linux":
             dname_bat0   = "/sys/class/power_supply/BAT0"
             fname_status = os.path.join(dname_bat0, "status")
