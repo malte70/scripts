@@ -9,34 +9,27 @@
 if ! git rev-parse --git-dir &>/dev/null; then
 	UPSTREAM="no git"
 else
-	# Test internet connection, needed for the git remote command.
-	# Using google-public-dns-a.google.com (8.8.8.8), which can be used for this.
-	ping -c1 -W 1 8.8.8.8 &>/dev/null
-	if [ $? -eq 1 ]; then
-		UPSTREAM="!fail!"
+	CACHEFILE=~/.cache/git-info/`pwd | tr '/' '='`
+	if [ -f $CACHEFILE ] && [[ $(python2 -c 'import os.path,time;print "yes" if (time.time()-os.path.getmtime("'"$CACHEFILE"'"))/(60*60*24) > 2.0 else "no"') == "no" ]]; then
+		UPSTREAM=`cat $CACHEFILE`
 	else
-		CACHEFILE=~/.cache/git-info/`pwd | tr '/' '='`
-		if [ -f $CACHEFILE ] && [[ $(python2 -c 'import os.path,time;print "yes" if (time.time()-os.path.getmtime("'"$CACHEFILE"'"))/(60*60*24) > 2.0 else "no"') == "no" ]]; then
-			UPSTREAM=`cat $CACHEFILE`
+		REMOTE=`git config --get remote.origin.url`
+		if [ -z "$REMOTE" ]; then
+			REMOTE="(local)$(basename `pwd`)"
+		fi
+		BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+		if [[ "${REMOTE:0:14}" == "git@github.com" ]]; then
+			UPSTREAM="${REMOTE:15:-4}:$BRANCH"
+		elif [[ "${REMOTE:0:19}" == "https://github.com/" ]]; then
+			UPSTREAM="`echo ${REMOTE:19} | sed 's/.git//g'`:$BRANCH"
+		elif [[ "${REMOTE:0:15}" == "git@git.mcbx.de" ]]; then
+			UPSTREAM="git.mcbx.de/`echo ${REMOTE:16} | sed 's/.git//g'`:$BRANCH"
+		elif [[ "${REMOTE:0:16}" == "git@repos.dma.do" ]]; then
+			UPSTREAM="repos.dma.do/${REMOTE:17:-4}:$BRANCH"
+		elif [[ "${REMOTE:0:31}" == "ssh://storage@abyss.mcbx.de:22/" ]]; then
+			UPSTREAM="SparkleShare:${REMOTE:44}"
 		else
-			REMOTE=`git config --get remote.origin.url`
-			if [ -z "$REMOTE" ]; then
-				REMOTE="(local)$(basename `pwd`)"
-			fi
-			BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-			if [[ "${REMOTE:0:14}" == "git@github.com" ]]; then
-				UPSTREAM="${REMOTE:15:-4}:$BRANCH"
-			elif [[ "${REMOTE:0:19}" == "https://github.com/" ]]; then
-				UPSTREAM="`echo ${REMOTE:19} | sed 's/.git//g'`:$BRANCH"
-			elif [[ "${REMOTE:0:15}" == "git@git.mcbx.de" ]]; then
-				UPSTREAM="git.mcbx.de/`echo ${REMOTE:16} | sed 's/.git//g'`:$BRANCH"
-			elif [[ "${REMOTE:0:16}" == "git@repos.dma.do" ]]; then
-				UPSTREAM="repos.dma.do/${REMOTE:17:-4}:$BRANCH"
-			elif [[ "${REMOTE:0:31}" == "ssh://storage@abyss.mcbx.de:22/" ]]; then
-				UPSTREAM="SparkleShare:${REMOTE:44}"
-			else
-				UPSTREAM="${REMOTE}:$BRANCH"
-			fi
+			UPSTREAM="${REMOTE}:$BRANCH"
 		fi
 		echo -n $UPSTREAM > $CACHEFILE
 	fi
