@@ -1,0 +1,53 @@
+#!/bin/bash
+#
+# youtube2mp3
+#    Download a video from Youtube and convert it to MP3.
+#
+# Usage: youtube2oga [Video-URL] [Output filename]
+#
+
+if [[ "$1" == "--keep-video" ]]; then
+	KEEP_VIDEO=1
+else
+	KEEP_VIDEO=0
+fi
+usage(){
+	echo "Usage: $0 [--keep-video] <Video-URL> <Output filename>"
+}
+if [[ $# -ne 2 ]]; then
+	if [[ $1 == "--help" ]]; then
+		usage
+		exit 0
+	fi
+	if [[ $# -ne 3 -a $KEEP_VIDEO -ne 1 ]]; then
+		usage >&2
+		exit 1
+	fi
+fi
+
+URL=$1
+FILENAME=$2
+if [[ $KEEP_VIDEO -eq 1 ]]; then
+	URL=$2
+	FILENAME=$3
+fi
+
+FFMPEG=
+which avconv &>/dev/null && FFMPEG=$(which avconv)
+which ffmpeg &>/dev/null && FFMPEG=$(which ffmpeg)
+
+if [[ $FFMPEG == "" ]]; then
+	echo "ffmpeg nor avconv found." >&2
+	echo "Please install ffmpeg!" >&2
+	exit 1
+fi
+
+VIDEOFILE=`youtube-dl --simulate --get-filename "$URL"`
+youtube-dl "$URL"
+
+$FFMPEG -i "$VIDEOFILE" -vn -codec:a libmp3lame -qscale:a 2 "$FILENAME"
+if [[ $KEEP_VIDEO -eq 0 ]]; then
+	rm "$VIDEOFILE"
+else
+	mv "$VIDEOFILE" "`echo $FILENAME | sed 's|mp3$|mp4|g'`"
+fi
