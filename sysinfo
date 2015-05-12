@@ -119,8 +119,8 @@ info_mem() {
 			# freecolor gives an output similiar to GNU's free, but not exactly the same,
 			# therefore we need another string for grep.
 			FREE="freecolor -o"
-			GREPSTRING="^Mem"
 		fi
+		$FREE | grep $GREPSTRING &>/dev/null || GREPSTRING="^Mem"
 		$FREE -m | grep $GREPSTRING | awk '{ print $3 "MB" }' | tr -d "\n"
 		echo -n " / "
 		$FREE -m | grep ^Mem | awk '{ print $2 "MB" }'
