@@ -3,6 +3,46 @@ scripts
 
 Various small scripts (Shell and python)
 
+battery\_status
+---------------
+
+*Language: Python 3*
+
+Get the current status of the battery on GNU/Linux notebooks (Currently
+only Linux Kernel version 2 or 3)
+
+
+deshort-url
+-----------
+
+*Language: Bourne-Shell*
+
+Simple reverse URL shortener based on a HEAD request with curl.
+
+dnsresolver
+-----------
+
+*Language: Python 3*
+
+A simple DNS resolver for A records (hostname to IP)
+
+dvd2ogv
+-------
+
+*Language: Bourne-Shell*
+
+Encode a movie on a DVD to an OGG Vorbis+Theora file. No problems
+with copy protection discovered yet.
+
+dvd2vob
+-------
+
+*Language: Bourne-Shell*
+
+Read the main track of a DVD movie into a VOB file (Playable with, e.g.
+VLC media player), which contains all spoken languages and subtitles
+present on the DVD.
+
 generate\_password
 -----------------
 
