@@ -28,6 +28,10 @@ else
 			UPSTREAM="repos.dma.do/${REMOTE:17:-4}:$BRANCH"
 		elif [[ "${REMOTE:0:31}" == "ssh://storage@abyss.mcbx.de:22/" ]]; then
 			UPSTREAM="SparkleShare:${REMOTE:44}"
+		elif [[ "${REMOTE:0:29}" == "ssh://aur@aur4.archlinux.org/" ]]; then
+			UPSTREAM="AUR:${REMOTE:29:-4}"
+		elif [[ "${REMOTE:0:28}" == "ssh://aur@aur.archlinux.org/" ]]; then
+			UPSTREAM="AUR:${REMOTE:28:-4}"
 		else
 			UPSTREAM="${REMOTE}:$BRANCH"
 		fi
