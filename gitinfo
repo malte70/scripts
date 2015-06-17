@@ -39,7 +39,7 @@ else
 	fi
 	# number of uncommited changes
 	# do not cache this.
-	CHANGES=`git status -s | wc -l | stripwhite`
+	CHANGES=`git status --short --ignore-submodules=all | wc -l | stripwhite`
 	if [ $CHANGES -gt 0 ]
 	then
 		UPSTREAM="${UPSTREAM}:${CHANGES}"
