@@ -1,0 +1,30 @@
+#!/bin/bash
+#
+# Play radio
+# Copyright (c) 2012-2013,2015 Malte Bublitz, https://malte-bublitz.de
+# Licensed under the WTFPL.
+#
+
+while :
+ do
+	clear
+	echo "<~-- Radio --~>"
+	echo
+	echo "1: Morow"
+	echo "2: HardBase.FM"
+	echo "3: HARDRADIO"
+	echo "q: quit"
+	echo
+	echo -n "? "
+	read choice
+	case "$choice" in
+		1) mpg123 "http://stream.morow.com:9090"
+		   ;;
+		2) mpg123 "http://listen.hardbase.fm/tunein-mp3-pls"
+			;;
+		3) mpg123 "http://listen.hardradio.de/stream"
+			;;
+		q) exit 0
+		   ;;
+	esac
+done
