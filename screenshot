@@ -6,9 +6,9 @@
 WAIT_TIME=5
 DO_EDIT=yes
 IMAGE_EDITOR=`which gimp` || IMAGE_EDITOR=`which xdg-open`
-TARGETDIR="khaos.malte70.de:~/f.malte70.de"
+TARGETDIR="khaos.mcbx.de:~/f.malte70.de"
 
-IMGNAME="screenshot.`hostname -s`_`date --iso-8601`.png"
+IMGNAME="screenshot_`hostname -s`_`date --iso-8601`_$(generate_password 8).png"
 IMGPATH="$(xdg-user-dir PICTURES)/$IMGNAME"
 
 do_screenshot() {
