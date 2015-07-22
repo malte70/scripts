@@ -6,6 +6,20 @@
 # CPU frequency-scaling control
 #
 
+if [[ "$(uname -s)" != "Linux" ]]; then
+	echo "$0 only supports Linux. Exit." >&2
+	exit 1
+fi
+if [[ ! -e /sys/class/power_supply/BAT0 ]]; then
+	echo "No battery found. Exit." >&2
+	exit 1
+fi
+if which cpupower &>/dev/null; then
+	true
+else
+	echo "cpupower not installed or not in \$PATH. Exit." >&2
+	exit 1
+fi
 _status() {
 	echo -n "Current CPU frequency: "
 	LC_ALL=C sudo cpupower frequency-info | grep 'current CPU' | cut -d" " -f7 | tr -d "\n"
@@ -15,6 +29,7 @@ _status() {
 }
 if [[ $# -eq 0 ]]; then
 	echo "Usage: $0 [status|powersave|performance]"
+	echo
 	_status
 	exit 0
 fi
