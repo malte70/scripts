@@ -9,6 +9,7 @@ import sys
 import os
 import socket
 import traceback
+import platform
 
 # this is a calculator, so this might be needed.
 from math import *
@@ -32,6 +33,16 @@ def clear():
 class Pycalc(object):
     prompt = "% "
     prompt_termtitle = ""
+    welcome_message = """pycalc
+Part of: malte70's scripts (github.com/malte70/scripts)
+
+Usage:
+	Each command is executed as a Python statement,
+	except for lines beginning with "*";
+	the rest of these lines is printed to stdout.
+
+Python version: """+platform.python_version()+"\n"
+
     def __init__(self, prompt = None):
         if not os.environ["TERM"] in ["linux", "dump"]:
             self.prompt_termtitle = "[H[2J]0;pycalc (malte70@"+socket.gethostname()+")"
@@ -43,6 +54,7 @@ class Pycalc(object):
         cmd = ""
         lastresult = 0
         print(self.prompt_termtitle, end="")
+        print(self.welcome_message.format(platform.python_version()))
         while not doExit:
             try:
                 print(self.prompt, end="")
