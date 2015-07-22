@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+#
+# cpumgr
+#     Part of: malte70/scripts
+#
+# CPU frequency-scaling control
+#
+
+_status() {
+	echo -n "Current CPU frequency: "
+	LC_ALL=C sudo cpupower frequency-info | grep 'current CPU' | cut -d" " -f7 | tr -d "\n"
+	echo " GHz"
+	echo -n "Current CPU Scaling: "
+	LC_ALL=C sudo cpupower frequency-info | grep 'The governor' | cut -d\" -f2
+}
+if [[ $# -eq 0 ]]; then
+	echo "Usage: $0 [status|powersave|performance]"
+	_status
+	exit 0
+fi
+if [[ "$1" == "powersave" ]]; then
+	sudo cpupower frequency-set -g powersave
+elif [[ "$1" == "performance" ]]; then
+	sudo cpupower frequency-set -g performance
+elif [[ "$1" == "status" ]]; then
+	_status
+fi
