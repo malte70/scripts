@@ -9,15 +9,17 @@
 show_help() {
 	echo "myip"
 	echo -e "\tShows your current IP address"
-	echo "Usage: myip [-4|-6|-g|-a]"
+	echo "Usage: myip [-4|-6|-g|-a|-x]"
 	echo -e "Options\n\t-4\tShow IPv4 address"
 	echo -e "\t-6\tShow IPv6 address"
 	echo -e "\t-g\tShow global IP using ip.malte-bublitz.de API"
 	echo -e "\t-a\tShow all informations at once"
+	echo -e "\t-x\tExtended/expert output mode"
 }
 SHOW_IPv4="no"
 SHOW_IPv6="no"
 SHOW_GLOBAL="no"
+SHOW_EXPERT="no"
 if [ $# -eq 0 ]; then
 	SHOW_IPv4="yes"
 	SHOW_IPv6="no"
@@ -36,6 +38,8 @@ else
 		SHOW_IPv4="yes"
 		SHOW_IPv6="yes"
 		SHOW_GLOBAL="yes"
+	elif [ $1 == "-x" ]; then
+		SHOW_EXPERT="yes"
 	fi
 fi
 
@@ -46,6 +50,26 @@ else
 	IP="`which ifconfig`"
 fi
 
+# Expert mode
+if [ $SHOW_EXPERT == "yes" ]; then
+	which ip &>/dev/null || {
+		echo "$0: Error: \"ip\" not found in PATH!" >&2
+		exit 1
+	}
+	ip addr                                          | \
+		grep -E '(inet |inet6 | UP | UNKNOWN )'      | \
+		awk '{ print $2 }'                           | \
+		awk '/:$/{ print "§" $0 } /\//{ print $1 }'  | \
+		cut -d/ -f1                                  | \
+		tr "\n" " "                                  | \
+		tr "§" "\n"                                  | \
+		grep -v -E '(^|: )$'                         | \
+		grep -v ': $'                                | \
+		sed 's/:/: /'                                | \
+		sort                                         | \
+		sed 's/ \+/ /g'
+	exit 0
+fi
 # IPv4
 if [ $SHOW_IPv4 == "yes" ]; then
 	IPv4=$($IP | grep inet\  |awk '{ print $2 }'  | cut -d/ -f1)
