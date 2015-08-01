@@ -5,6 +5,33 @@
 #    for the zsh prompt.
 #
 
+CACHEDIR="$HOME/.cache/git-info"
+
+usage_help() {
+	cat <<EOF
+Usage:
+	gitinfo
+	gitinfo --help
+	gitinfo --clean-cache
+
+Options:
+	--help         Show this help
+	--clean-cache  Clean up the whole cache
+
+EOF
+}
+
+if [[ $1 == "--help" ]]; then
+	usage_help
+	exit 0
+elif [[ $1 == "--clean-cache" ]]; then
+	rm -f $CACHEDIR/=*
+	exit 0
+elif [[ $# -ne 0 ]]; then
+	usage_help >&2
+	exit 1
+fi
+
 get_root_folder_name() {
 	GIT_DIR=$(git rev-parse --git-dir )
 	if [[ $GIT_DIR == ".git" ]]; then
@@ -19,7 +46,7 @@ get_root_folder_name() {
 if ! git rev-parse --git-dir &>/dev/null; then
 	UPSTREAM="no git"
 else
-	CACHEFILE=~/.cache/git-info/`pwd | tr '/' '='`
+	CACHEFILE="${CACHEDIR}/`pwd | tr '/' '='`"
 	if [ -f $CACHEFILE ] && [[ $(python2 -c 'import os.path,time;print "yes" if (time.time()-os.path.getmtime("'"$CACHEFILE"'"))/(60*60*24) > 2.0 else "no"') == "no" ]]; then
 		UPSTREAM=`cat $CACHEFILE`
 	else
