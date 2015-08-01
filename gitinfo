@@ -30,6 +30,8 @@ else
 		BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 		if [[ "${REMOTE:0:14}" == "git@github.com" ]]; then
 			UPSTREAM="${REMOTE:15:-4}:$BRANCH"
+		elif [[ "${REMOTE:0:19}" == "git@gist.github.com" ]]; then
+			UPSTREAM="Gist/${REMOTE:20:-4}:$BRANCH"
 		elif [[ "${REMOTE:0:19}" == "https://github.com/" ]]; then
 			UPSTREAM="`echo ${REMOTE:19} | sed 's/.git//g'`:$BRANCH"
 		elif [[ "${REMOTE:0:15}" == "git@git.mcbx.de" ]]; then
