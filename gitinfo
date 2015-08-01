@@ -5,6 +5,16 @@
 #    for the zsh prompt.
 #
 
+get_root_folder_name() {
+	GIT_DIR=$(git rev-parse --git-dir )
+	if [[ $GIT_DIR == ".git" ]]; then
+		GIT_DIR=$PWD
+	else
+		GIT_DIR=$(echo $GIT_DIR | sed 's/\.git//g')
+	fi
+	basename $GIT_DIR
+}
+
 [ ! -d $HOME/.cache/git-info ] && mkdir -p $HOME/.cache/git-info
 if ! git rev-parse --git-dir &>/dev/null; then
 	UPSTREAM="no git"
@@ -15,7 +25,7 @@ else
 	else
 		REMOTE=`git config --get remote.origin.url`
 		if [ -z "$REMOTE" ]; then
-			REMOTE="(local)$(basename `pwd`)"
+			REMOTE="$(get_root_folder_name)"
 		fi
 		BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 		if [[ "${REMOTE:0:14}" == "git@github.com" ]]; then
