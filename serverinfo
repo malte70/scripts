@@ -1,0 +1,67 @@
+#!/bin/bash
+#
+# serverinfo
+#     Basic system information, e.g. shown after logging in
+# 
+# Part of: https://github.com/malte70/scripts
+#
+
+#
+# Abort on non-GNU/Linux systems
+#
+if [[ $(uname -o 2>&1) != "GNU/Linux" ]]; then
+	echo "Only GNU/Linux supported, but following system found (output of uname)" >&2
+	uname
+	exit 1
+fi
+
+#
+# Get information
+#
+_HOST=$(hostname -f)
+if which lsb_release &>/dev/null; then
+	_OS=$(lsb_release -a 2>/dev/null | grep Description | cut -d: -f2- | sed 's/^[ \t]*//;s/[ \t]*$//g')
+else
+	_OS=$(uname -o)
+fi
+_RAM_USED=$(free -m | grep buffers/cache | awk '{ print $3 }')
+_RAM_ALL=$(free -m | grep ^Mem | awk '{ print $2 }')
+_UPTIME=$(LC_ALL=C uptime | python -c 'import sys; print " ".join(sys.stdin.readline().split(",")[:-4])[13:]')
+_CPU_USAGE=$(mpstat | tail -n+4 | awk '{ print $4+$5 }')
+_ENV="$(basename $SHELL)"
+if [[ -n $EDITOR ]]; then
+	_ENV="${_ENV} + $EDITOR"
+fi
+if [[ $(basename $(getent passwd $USER | cut -d: -f7)) == "zsh" ]]; then
+	if [[ -d $HOME/.git ]]; then
+		REMOTE_DOTFILES="git@github.com:malte70/dotfiles.git"
+		REMOTE_SCRIPTS="git@github.com:malte70/scripts.git"
+		cd
+		if [[ $(git config --get remote.origin.url) == $REMOTE_DOTFILES ]]; then 
+			_ENV="dotfiles"
+		fi
+		if [[ ! -d $HOME/bin/.git && ! -d $HOME/scripts/.git ]]; then
+			_ENV=" without scripts (!)"
+		fi
+	fi
+fi
+
+if [[ $(hostname -d) == "tardis.mcbx.de" ]]; then
+	echo
+	echo "== System info =="
+else
+	echo
+	echo "== Server Info =="
+fi
+
+cat <<EOF
+Hostname:    $_HOST
+OS:          $_OS
+RAM:         $_RAM_USED MB / $_RAM_ALL MB
+CPU Usage:   $_CPU_USAGE %
+Uptime:      $_UPTIME
+Environment: $_ENV
+
+EOF
+
+
