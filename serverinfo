@@ -26,8 +26,12 @@ else
 fi
 _RAM_USED=$(free -m | grep buffers/cache | awk '{ print $3 }')
 _RAM_ALL=$(free -m | grep ^Mem | awk '{ print $2 }')
-_UPTIME=$(LC_ALL=C uptime | python -c 'import sys; print " ".join(sys.stdin.readline().split(",")[:-4])[13:]')
-_CPU_USAGE=$(mpstat | tail -n+4 | awk '{ print $4+$5 }')
+_UPTIME=$(LC_ALL=C uptime | python2 -c 'import sys; print " ".join(sys.stdin.readline().split(",")[:-4])[13:]')
+if which mpstat &>/dev/null; then
+	_CPU_USAGE=$(mpstat | tail -n+4 | awk '{ print $4+$5 }')
+else
+	_CPU_USAGE="mpstat not found."
+fi
 _ENV="$(basename $SHELL)"
 if [[ -n $EDITOR ]]; then
 	_ENV="${_ENV} + $EDITOR"
