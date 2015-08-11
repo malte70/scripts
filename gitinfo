@@ -1,11 +1,21 @@
 #!/usr/bin/env zsh
 #
-# git info
-#    Shows information about a git repository
-#    for the zsh prompt.
+# gitinfo
+#    Part of: malte70/scripts
+# 
+# Shows information about a git repository
+# for the zsh prompt.
+#
+# Copyright (c) 2014-2015 Malte Bublitz, http://malte-bublitz.de
+# All rights reserved.
 #
 
-CACHEDIR="$HOME/.cache/git-info"
+SCRIPT_NAME="gitinfo"
+SCRIPT_PROJECT_NAME=""
+SCRIPT_VERSION="0.20150802"
+
+CACHEDIR="$HOME/.cache/gitinfo"
+CACHEFILE="${CACHEDIR}/`pwd | tr '/' '='`"
 
 usage_help() {
 	cat <<EOF
@@ -13,13 +23,18 @@ Usage:
 	gitinfo
 	gitinfo --help
 	gitinfo --clean-cache
+	gitinfo --clean-cache-pwd
 
 Options:
-	--help         Show this help
-	--clean-cache  Clean up the whole cache
+	--help             Show this help
+	--clean-cache      Clean up the whole cache
+	--clean-cache-pwd  Clean up the cache for the current directory and all sub-directories
+	--ignore-cache     Ignore the cache
 
 EOF
 }
+
+DO_IGNORE_CACHE="yes"
 
 if [[ $1 == "--help" ]]; then
 	usage_help
@@ -27,6 +42,12 @@ if [[ $1 == "--help" ]]; then
 elif [[ $1 == "--clean-cache" ]]; then
 	rm -f $CACHEDIR/=*
 	exit 0
+elif [[ $1 == "--clean-cache-pwd" ]]; then
+	rm -f ${CACHEFILE} 2>/dev/null
+	rm -f ${CACHEFILE}* 2>/dev/null
+	exit 0
+elif [[ $1 == "--ignore-cache" ]]; then
+	DO_IGNORE_CACHE="yes"
 elif [[ $# -ne 0 ]]; then
 	usage_help >&2
 	exit 1
@@ -42,19 +63,21 @@ get_root_folder_name() {
 	basename $GIT_DIR
 }
 
-[ ! -d $HOME/.cache/git-info ] && mkdir -p $HOME/.cache/git-info
+[ ! -d $CACHEDIR ] && mkdir -p $CACHEDIR
 if ! git rev-parse --git-dir &>/dev/null; then
 	UPSTREAM="no git"
 else
-	CACHEFILE="${CACHEDIR}/`pwd | tr '/' '='`"
-	if [ -f $CACHEFILE ] && [[ $(python2 -c 'import os.path,time;print "yes" if (time.time()-os.path.getmtime("'"$CACHEFILE"'"))/(60*60*24) > 2.0 else "no"') == "no" ]]; then
+	if [[ -f $CACHEFILE && $DO_IGNORE_CACHE == "no" && $(python2 -c 'import os.path,time;print "yes" if (time.time()-os.path.getmtime("'"$CACHEFILE"'"))/(60*60*24) > 2.0 else "no"') == "no" ]]; then
 		UPSTREAM=`cat $CACHEFILE`
 	else
 		REMOTE=`git config --get remote.origin.url`
 		if [ -z "$REMOTE" ]; then
 			REMOTE="$(get_root_folder_name)"
 		fi
-		BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+		BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
+		if [[ $? -eq 128 ]]; then
+			BRANCH="master"
+		fi
 		if [[ "${REMOTE:0:14}" == "git@github.com" ]]; then
 			UPSTREAM="${REMOTE:15:-4}:$BRANCH"
 		elif [[ "${REMOTE:0:19}" == "git@gist.github.com" ]]; then
