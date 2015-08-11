@@ -1,42 +1,78 @@
 #!/usr/bin/env bash
-#
+# 
 # cpumgr
 #     Part of: malte70/scripts
-#
+# 
 # CPU frequency-scaling control
-#
+# 
+# Copyright (c) 2015 Malte Bublitz, http://malte-bublitz.de
+# All rights reserved.
+# 
+
+SCRIPT_NAME="$(basename $0)"
+SCRIPT_VERSION="0.20150810"
+
+version() {
+	echo "$SCRIPT_NAME $SCRIPT_VERSION"
+}
+usage() {
+	echo "Usage:"
+	echo "  $SCRIPT_NAME"
+	echo "  $SCRIPT_NAME [--version|--help]"
+	echo "  $SCRIPT_NAME <governor>"
+	echo
+	echo "If called without any arguments, the current status is shown"
+	echo
+	echo "Options:"
+	echo "  --version -V  Show the version and exit"
+	echo "  --help    -h  Show this help and exit"
+	echo
+	echo "Supported governors:"
+	echo "  powersave"
+	echo "  performance"
+	echo
+}
+
+if [[ "$1" == "--version" || "$1" == "-V" ]]; then
+	version
+	exit 0
+elif [[ "$1" == "--help" || "$1" == "-h" ]]; then
+	version
+	usage
+	exit 0
+fi
 
 if [[ "$(uname -s)" != "Linux" ]]; then
-	echo "$0 only supports Linux. Exit." >&2
+	echo "${SCRIPT_NAME}: Error: Only Linux supported. Sorry. :(" >&2
 	exit 1
 fi
 if [[ ! -e /sys/class/power_supply/BAT0 ]]; then
-	echo "No battery found. Exit." >&2
+	echo "${SCRIPT_NAME}: Error: No battery found. Exit." >&2
 	exit 1
 fi
 if which cpupower &>/dev/null; then
 	true
 else
-	echo "cpupower not installed or not in \$PATH. Exit." >&2
+	echo "${SCRIPT_NAME}: Error: cpupower not installed or not in \$PATH. Exit." >&2
 	exit 1
 fi
-_status() {
-	echo -n "Current CPU frequency: "
-	LC_ALL=C sudo cpupower frequency-info | grep 'current CPU' | cut -d" " -f7 | tr -d "\n"
-	echo " GHz"
-	echo -n "Current CPU Scaling: "
-	LC_ALL=C sudo cpupower frequency-info | grep 'The governor' | cut -d\" -f2
-}
+
 if [[ $# -eq 0 ]]; then
-	echo "Usage: $0 [status|powersave|performance]"
-	echo
-	_status
+	echo -n "Current CPU frequency: "
+	LC_ALL=C sudo cpupower frequency-info | grep 'CPU frequency' | cut -d" " -f7-8
+	
+	echo -n "Current CPU Scaling:   "
+	LC_ALL=C sudo cpupower frequency-info | grep 'The governor' | cut -d\" -f2
 	exit 0
-fi
-if [[ "$1" == "powersave" ]]; then
+elif [[ "$1" == "powersave" ]]; then
 	sudo cpupower frequency-set -g powersave
 elif [[ "$1" == "performance" ]]; then
 	sudo cpupower frequency-set -g performance
-elif [[ "$1" == "status" ]]; then
-	_status
+elif [[ "${1:0:1}" == "-" ]]; then
+	echo "Unknown option: $1" >&2
+	usage >&2
+	exit 1
+else
+	echo "${SCRIPT_NAME}: Error: Unknown governor $1" >&2
+	exit 1
 fi
