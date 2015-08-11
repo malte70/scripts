@@ -20,9 +20,20 @@ except NameError:
 
 import platform
 from getpass import getuser
+import os
 
 def main():
-    commands_allowed = ("", "exit", "logout", "help", "whoami", "hostname", "pwd", "uname")
+    commands_allowed = (
+        "",
+        "exit",
+        "logout",
+        "help",
+        "whoami",
+        "hostname",
+        "pwd",
+        "bash",
+        "uname"
+    )
     command = ""
     print("""
 This is Minimal Shell on node """+platform.node()+""".
@@ -33,7 +44,11 @@ Type exit<ENTER> to exit.
     try:
         while command != "exit":
             print("$ ",end="")
-            command = input()
+            try:
+                command = input()
+            except KeyboardInterrupt:
+                print("")
+                continue
             if command == "logout":
                 command = "exit"
             elif command == "help":
@@ -52,11 +67,17 @@ Commands:
                 print(platform.uname()[1])
             elif command == "pwd":
                 print("/var/empty")
+            elif command == "bash":
+                print("Executing bash session...")
+                ret_code = os.system("bash")
+                print("bash session exited with code "+str(ret_code)+".")
             elif command == "uname":
                 print(platform.uname()[0]+" "+platform.uname()[1]+" "+platform.uname()[2])
             if not command in commands_allowed:
-                print("You may not execute commands!")
-                print("-minishell: "+command.split(" ")[0]+": Command not found.")
+                if os.system("which " + command.split()[0]) == 0:
+                    print("-minishell: "+command.split(" ")[0]+": You may not execute commands!")
+                else:
+                    print("-minishell: "+command.split(" ")[0]+": Command not found.")
     except EOFError:
         print("<EOF>")
     print("Good bye.")
