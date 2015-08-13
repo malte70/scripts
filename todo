@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+#
+# todo
+#    Part of: malte70's Shell scripts <https://github.com/malte70/scripts>
+# 
+# A simple todo list
+# 
+# Copyright (c) 2015 Malte Bublitz, http://malte-bublitz.de
+# All rights reserved.
+# 
+
+SCRIPT_NAME="todo"
+SCRIPT_VERSION="0.0.1"
+
+TODO_FILE="$HOME/.todo"
+
+source $(dirname $0)/_base.inc.sh
+
+usage() {
+	echo "Usage:"
+	echo "	$SCRIPT_NAME"
+	echo "	$SCRIPT_NAME [--show]"
+	echo "	$SCRIPT_NAME [-e|--edit]"
+	echo
+	echo "Options:"
+	echo "	--version -V  Show the version and exit"
+	echo "	--help    -h  Show the help and exit"
+	echo "	--edit    -e  Edit the todo list"
+	echo "	--show        Show the todo list ans exit (default if no options passed)"
+	echo
+}
+
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+	version
+	usage
+	exit 0
+fi
+
+# Check if todo list file exists
+INIT_NEEDED="yes"
+if [[ -f "$TODO_FILE" ]]; then
+	INIT_NEEDED="no"
+fi
+init_todo_file() {
+	# Initialize the todo file
+	touch $TODO_FILE
+	cat <<EOF >"$TODO_FILE"
+# TODO list
+
+ * Item 1
+ * Item 2
+
+EOF
+}
+
+if [[ $# -eq 0 ]]; then
+	# Show todo list
+	
+	if [[ $INIT_NEEDED == "yes" ]]; then
+		_println "Info: Todo file ($TODO_FILE) does not exist. Creating it."
+		init_todo_file
+	fi
+	cat "$TODO_FILE"
+	
+elif [[ "$1" == "-e" || "$1" == "--edit" ]]; then
+	# Edit todo list
+	
+	if [[ $INIT_NEEDED == "yes" ]]; then
+		_println "Info: Todo file ($TODO_FILE) does not exist. Creating it."
+		init_todo_file
+		_println "Press <ENTER> to edit it in your favourite editor."
+		read
+	fi
+	
+	$EDITOR "$TODO_FILE"
+	
+elif [[ "${1:0:1}" == "-" ]]; then
+	message_error "Unknown option: $1"
+	usage
+	exit 1
+	
+else
+	message_error "Unknown argument: $1"
+	usage
+	exit 1
+	
+fi
+
