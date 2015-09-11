@@ -160,11 +160,29 @@ info_locale() {
 	[ -z $locale ] && locale=C
 	echo "Locale${DOTS}: $locale"
 }
+info_all() {
+	export DESC_COL_LENGTH=9
+	info_os
+	info_kernel
+	info_platform
+	info_nodename
+	info_uptime
+	info_wm
+	info_mem
+	info_cpu
+	info_env
+	info_locale
+}
 
-if [ -z "$1" ]
-then
+if [[ -z "$1" ]]; then
+	info_all
+	exit 0
+elif [[ "$1" == "--help" ]]; then
 	display_help
-	exit 1
+	exit 0
+elif [[ "$1" == "--version" ]]; then
+	display_version
+	exit 0
 fi
 # Length for descriptive column
 DESC_COL_LENGTH=2
@@ -274,17 +292,7 @@ while getopts "Vhornuwmpelac" opt; do
 			info_locale
 			;;
 		a)
-			export DESC_COL_LENGTH=9
-			info_os
-			info_kernel
-			info_platform
-			info_nodename
-			info_uptime
-			info_wm
-			info_mem
-			info_cpu
-			info_env
-			info_locale
+			info_all
 			;;
 		*)
 			display_help
