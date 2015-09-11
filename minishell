@@ -72,7 +72,8 @@ Commands:
             elif command == "bash":
                 print("Executing bash session...")
                 ret_code = os.system("bash")
-                print("bash session exited with code "+str(ret_code)+".")
+                if ret_code != 0:
+                    print("bash session exited with non-zero code "+str(ret_code)+".")
             elif command == "uname":
                 print(platform.uname()[0]+" "+platform.uname()[1]+" "+platform.uname()[2])
             elif command == "clear":
