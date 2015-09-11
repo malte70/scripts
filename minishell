@@ -29,6 +29,7 @@ def main():
         "logout",
         "help",
         "whoami",
+        "id",
         "hostname",
         "pwd",
         "bash",
@@ -65,10 +66,12 @@ Commands:
 """)
             elif command == "whoami":
                 print(getuser())
+            elif command == "id":
+                print("uid=42("+getuser()+") gid=100(users) groups=42("+getuser()+"),9999(minishell)")
             elif command == "hostname":
                 print(platform.uname()[1])
             elif command == "pwd":
-                print("/var/empty")
+                print("/usr/home/"+getuser())
             elif command == "bash":
                 print("Executing bash session...")
                 ret_code = os.system("bash")
