@@ -5,7 +5,7 @@
 #    Use whenever a user should be able to launch a shell,
 #    but not to execute commands.
 #
-# Copyright (c) 2013 Malte Bublitz.
+# Copyright (c) 2013-2015 Malte Bublitz.
 # All rights reserved.
 # 
 # Licensed under the terms of the 2-clause BSD license.
@@ -32,7 +32,8 @@ def main():
         "hostname",
         "pwd",
         "bash",
-        "uname"
+        "uname",
+        "clear"
     )
     command = ""
     print("""
@@ -58,6 +59,7 @@ Commands:
     hostname
     pwd
     uname
+    clear
     help
     logout/exit
 """)
@@ -73,6 +75,8 @@ Commands:
                 print("bash session exited with code "+str(ret_code)+".")
             elif command == "uname":
                 print(platform.uname()[0]+" "+platform.uname()[1]+" "+platform.uname()[2])
+            elif command == "clear":
+                ret_code = os.system("clear")
             if not command in commands_allowed:
                 if os.system("which " + command.split()[0]) == 0:
                     print("-minishell: "+command.split(" ")[0]+": You may not execute commands!")
