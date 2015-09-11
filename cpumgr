@@ -12,9 +12,8 @@
 SCRIPT_NAME="$(basename $0)"
 SCRIPT_VERSION="0.20150810"
 
-version() {
-	echo "$SCRIPT_NAME $SCRIPT_VERSION"
-}
+source $(dirname $0)/_base.inc.sh
+
 usage() {
 	echo "Usage:"
 	echo "  $SCRIPT_NAME"
@@ -33,10 +32,7 @@ usage() {
 	echo
 }
 
-if [[ "$1" == "--version" || "$1" == "-V" ]]; then
-	version
-	exit 0
-elif [[ "$1" == "--help" || "$1" == "-h" ]]; then
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
 	version
 	usage
 	exit 0
