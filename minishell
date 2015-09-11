@@ -79,7 +79,7 @@ Commands:
             elif command == "clear":
                 ret_code = os.system("clear")
             if not command in commands_allowed:
-                if os.system("which " + command.split()[0]) == 0:
+                if os.system("which " + command.split()[0] + " &>/dev/null") == 0:
                     print("-minishell: "+command.split(" ")[0]+": You may not execute commands!")
                 else:
                     print("-minishell: "+command.split(" ")[0]+": Command not found.")
