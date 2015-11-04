@@ -1,0 +1,120 @@
+#!/usr/bin/env zsh
+# 
+# update
+#     Part of: malte70/scripts
+# 
+# System update function
+# 
+# Copyright (c) 2015 Malte Bublitz, http://malte-bublitz.de
+# All rights reserved.
+# 
+
+#asdf() {
+#}
+
+SCRIPT_NAME="$(basename $0)"
+SCRIPT_VERSION="0.20151104"
+
+source $(dirname $0)/_base.inc.sh
+
+usage() {
+	echo "Usage:"
+	echo "  $SCRIPT_NAME"
+	echo "  $SCRIPT_NAME <options>"
+	echo
+	echo "Update the system:"
+	echo " -> dotfiles"
+	echo " -> scripts"
+	echo " -> Installed packages"
+	echo
+	echo "Options:"
+	echo "  --version -V  Show the version and exit"
+	echo "  --help    -h  Show this help and exit"
+	echo "  --dry-run -d  Dry run, don't do any changes"
+	echo
+}
+
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+	version
+	usage
+	exit 0
+elif [[ "$1" == "--version" || "$1" == "-v" ]]; then
+	version
+	exit 0
+fi
+
+DO_DRY_RUN="false"
+if [[ "$1" == "--dry-run" || "$1" == "-d" ]]; then
+	DO_DRY_RUN="true"
+fi
+
+message() {
+	echo "${_ANSI_COLOR_DARK_CYAN}==[${_ANSI_COLOR_LIGHT_GREEN} $@ ${_ANSI_COLOR_DARK_CYAN}]==${_ANSI_RESET}"
+}
+
+
+##################################################
+# dotfiles repository
+#
+
+
+message "git pull malte70/dotfiles @ \$HOME"
+
+cd $HOME
+
+if [[ $DO_DRY_RUN == "true" ]]; then
+	git fetch
+else
+	git pull
+	git submodule init >/dev/null
+	git submodule sync >/dev/null
+	git submodule update >/dev/null
+fi
+
+##################################################
+# scripts repository
+#
+
+if [[ -d $HOME/scripts ]]; then
+	message "pushd <- \$HOME/scripts"
+	pushd $HOME/scripts >/dev/null
+else
+	message "pushd <- \$HOME/bin"
+	pushd $HOME/bin >/dev/null
+fi
+
+message "git pull @ malte70/scripts"
+git pull
+
+##################################################
+# Upgrade packages
+#
+
+if [[ $OS == "GNU/Linux" ]]; then
+	if [[ $OSVARIANT == "Arch" ]]; then
+		message "$OSVARIANT :: Upgrade"
+		y-Syu --aur
+		message "$OSVARIANT :: Cleanup"
+		y -Qqdt &>/dev/null && y -R $(y -Qqdt)
+		if [[ -d /var/abs ]]; then
+			message "$OSVARIANT :: Syncing Arch Build System"
+			abs
+		fi
+		
+	elif [[ $OSVARIANT == "Debian" || $OSVARIANT == "Ubuntu" ]]; then
+		message "$OSVARIANT :: Update"
+		sudo apt-get update
+		message "$OSVARIANT :: Upgrade"
+		sudo apt-get upgrade
+		message "$OSVARIANT :: Dist-Upgrade"
+		sudo apt-get dist-upgrade
+		message "$OSVARIANT :: Cleanup"
+		sudo apt-get autoremove
+	fi
+elif [[ $OS == "Mac OS X" ]]; then
+	message "$OS :: Homebrew :: Update"
+	brew update
+	message "$OS :: Homebrew :: Upgrade"
+	brew upgrade --all
+fi
+
