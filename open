@@ -1,0 +1,69 @@
+#!/usr/bin/env zsh
+# 
+# open
+#    Provide OS X's open utility on GNU/Linux
+# 
+# Copyright (c) 2015 Malte Bublitz, http://malte-bublitz.de
+# All rights reserved.
+#
+
+SCRIPT_NAME="open"
+SCRIPT_VERSION="0.1"
+
+version() {
+	echo "$SCRIPT_NAME $SCRIPT_VERSION"
+	echo "Provides OS X's open utility on GNU/Linux"
+}
+usage() {
+	echo "Usage:"
+	echo "   $SCRIPT_NAME [OPTIONS] [FILENAME]"
+	echo 
+	echo "Options:"
+	echo "  --version -V  Show the version and exit"
+	echo "  --help -h     Show this help and exit"
+	echo "  -a <App>      Open the file using <App>"
+	echo 
+	echo "If the filename is omitted, the application is launched without arguments."
+	echo 
+}
+
+if [[ $# -eq 0 ]]; then
+    usage >&2
+    exit 1
+elif [[ "$1" == "--version" || "$1" == "-V" ]]; then
+    version
+    exit 0
+elif [[ "$1" == "--help" || "$1" == "-h" ]]; then
+    version
+    usage
+    exit 0
+fi
+
+if [[ -z "$DISPLAY" ]]; then
+    echo "$0: Error: \$DISPLAY not set!" >&2
+    exit 1
+fi
+
+if [[ "$1" == "-a" ]]; then
+    if [[ $# -ne 2 && $# -ne 3 ]]; then
+        usage >&2
+        exit 1
+    fi
+    shift
+    APP="$1"
+    shift
+else
+    if which gvfs-open &>/dev/null; then
+        APP="gvfs-open"
+    elif which xdg-open &>/dev/null; then
+        APP="xdg-open"
+    else
+        echo "$0: Error: xdg-open not found!" >&2
+        exit 1
+    fi
+fi
+
+FILE="$1"
+
+$APP $FILE </dev/null &>/dev/null &|
+
