@@ -49,7 +49,7 @@ fi
 _md2html() {
 	markdown="$1"
 	html="$2"
-	pandoc --from markdown_github --to html --standalone "$markdown" --output "$html"
+	pandoc --from markdown_github --to html5 --standalone "$markdown" --output "$html"
 }
 
 markdown="$1"
