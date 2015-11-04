@@ -61,9 +61,9 @@ if [[ $# -eq 0 ]]; then
 	LC_ALL=C sudo cpupower frequency-info | grep 'The governor' | cut -d\" -f2
 	exit 0
 elif [[ "$1" == "powersave" ]]; then
-	sudo cpupower frequency-set -g powersave
+	sudo cpupower frequency-set -g powersave | sed 's/Setting cpu:/CPU/g;s/$/: powersave/g' 
 elif [[ "$1" == "performance" ]]; then
-	sudo cpupower frequency-set -g performance
+	sudo cpupower frequency-set -g performance | sed 's/Setting cpu:/CPU/g;s/$/: performance/g' 
 elif [[ "${1:0:1}" == "-" ]]; then
 	echo "Unknown option: $1" >&2
 	usage >&2
