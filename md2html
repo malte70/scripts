@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+#
+# md2html
+#     Part of: malte70/scripts
+#
+# Markdown to HTML converter powered by pandoc
+#
+# Copyright (c) 2015 Malte Bublitz, http://malte-bublitz.de
+# All rights reserved.
+# 
+
+SCRIPT_NAME="$(basename $0)"
+SCRIPT_VERSION="0.20151103"
+
+source $(dirname $0)/_base.inc.sh
+
+usage() {
+	echo "Usage:"
+	echo "  $SCRIPT_NAME"
+	echo "  $SCRIPT_NAME [--version|--help]"
+	echo "  $SCRIPT_NAME <filename.md>"
+	echo
+	echo "Options:"
+	echo "  --version -V  Show the version and exit"
+	echo "  --help    -h  Show this help and exit"
+	echo
+}
+
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+	version
+	usage
+	exit 0
+fi
+
+if which pandoc &>/dev/null; then
+	true
+else
+	echo "${SCRIPT_NAME}: Error: pandoc not found in \$PATH. Please install it."
+	exit 1
+fi
+
+if [[ $1 == "-v" ]]; then
+	VERBOSE=1
+	shift
+else
+	VERBOSE=0
+fi
+
+_md2html() {
+	markdown="$1"
+	html="$2"
+	pandoc --from markdown_github --to html --standalone "$markdown" --output "$html"
+}
+
+markdown="$1"
+
+if [[ ! -f "$markdown" ]]
+then
+	message_error "No such file or directory: $markdown"
+	exit 13
+fi
+
+html="${markdown%.*}.html"
+
+if [[ $VERBOSE -eq 1 ]]; then
+	echo "$markdown -> $html"
+fi
+
+_md2html "$markdown" "$html"
