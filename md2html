@@ -53,8 +53,11 @@ _md2html() {
 	
 	sed -i "s/title>/title>$1/" "$2"
 	ADDITIONAL_STYLES="body{font: 18px 'Source Serif Pro';margin-left: 4em}"
+	ADDITIONAL_STYLES="${ADDITIONAL_STYLES}body>*{margin-bottom:1em;margin-top:0.8em;}"
+	ADDITIONAL_STYLES="${ADDITIONAL_STYLES}pre{background:#ddd;border:1px solid #aaa;padding:1em;}"
 	ADDITIONAL_STYLES="${ADDITIONAL_STYLES}h1:before,h2:before{display:inline-block;width:3em;text-align:right;margin-left:-3.5em;padding-right:.5em;}"
 	ADDITIONAL_STYLES="${ADDITIONAL_STYLES}h1:before{content:\"# \";}h2:before{content:\"## \";}"
+	ADDITIONAL_STYLES="${ADDITIONAL_STYLES}a:link,a:visited{color:#111;}"
 	
 	sed -i "s/pre;}/pre;}$ADDITIONAL_STYLES/" "$2"
 }
