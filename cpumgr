@@ -28,6 +28,7 @@ usage() {
 	echo
 	echo "Supported governors:"
 	echo "  powersave"
+	echo "  ondemand"
 	echo "  performance"
 	echo
 }
@@ -62,6 +63,8 @@ if [[ $# -eq 0 ]]; then
 	exit 0
 elif [[ "$1" == "powersave" ]]; then
 	sudo cpupower frequency-set -g powersave | sed 's/Setting cpu:/CPU/g;s/$/: powersave/g' 
+elif [[ "$1" == "ondemand" ]]; then
+	sudo cpupower frequency-set -g ondemand | sed 's/Setting cpu:/CPU/g;s/$/: ondemand/g' 
 elif [[ "$1" == "performance" ]]; then
 	sudo cpupower frequency-set -g performance | sed 's/Setting cpu:/CPU/g;s/$/: performance/g' 
 elif [[ "${1:0:1}" == "-" ]]; then
@@ -69,6 +72,6 @@ elif [[ "${1:0:1}" == "-" ]]; then
 	usage >&2
 	exit 1
 else
-	echo "${SCRIPT_NAME}: Error: Unknown governor $1" >&2
+	echo "${SCRIPT_NAME}: Error: Unknown/unsupported governor $1" >&2
 	exit 1
 fi
