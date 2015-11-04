@@ -26,7 +26,7 @@ usage() {
 	echo "	--version -V  Show the version and exit"
 	echo "	--help    -h  Show the help and exit"
 	echo "	--edit    -e  Edit the todo list"
-	echo "	--show        Show the todo list ans exit (default if no options passed)"
+	echo "	--show        Show the todo list and exit (default if no options passed)"
 	echo
 }
 
