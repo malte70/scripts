@@ -50,6 +50,13 @@ _md2html() {
 	markdown="$1"
 	html="$2"
 	pandoc --from markdown_github --to html5 --standalone "$markdown" --output "$html"
+	
+	sed -i "s/title>/title>$1/" "$2"
+	ADDITIONAL_STYLES="body{font: 18px 'Source Serif Pro';margin-left: 4em}"
+	ADDITIONAL_STYLES="${ADDITIONAL_STYLES}h1:before,h2:before{display:inline-block;width:3em;text-align:right;margin-left:-3.5em;padding-right:.5em;}"
+	ADDITIONAL_STYLES="${ADDITIONAL_STYLES}h1:before{content:\"# \";}h2:before{content:\"## \";}"
+	
+	sed -i "s/pre;}/pre;}$ADDITIONAL_STYLES/" "$2"
 }
 
 markdown="$1"
