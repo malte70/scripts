@@ -93,9 +93,9 @@ git pull
 if [[ $OS == "GNU/Linux" ]]; then
 	if [[ $OSVARIANT == "Arch" ]]; then
 		message "$OSVARIANT :: Upgrade"
-		y-Syu --aur
+		yaourt -Syu --aur
 		message "$OSVARIANT :: Cleanup"
-		y -Qqdt &>/dev/null && y -R $(y -Qqdt)
+		yaourt -Qqdt &>/dev/null && yaourt -R $(y -Qqdt)
 		if [[ -d /var/abs ]]; then
 			message "$OSVARIANT :: Syncing Arch Build System"
 			abs
