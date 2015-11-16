@@ -58,7 +58,7 @@ if [[ $# -eq 0 ]]; then
 	echo -n "Current CPU frequency: "
 	LC_ALL=C sudo cpupower frequency-info | grep 'CPU frequency' | cut -d" " -f7-8
 	
-	echo -n "Current CPU Scaling:   "
+	echo -n "Current CPU scaling:   "
 	LC_ALL=C sudo cpupower frequency-info | grep 'The governor' | cut -d\" -f2
 	exit 0
 elif [[ "$1" == "powersave" ]]; then
