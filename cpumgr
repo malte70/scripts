@@ -10,7 +10,7 @@
 # 
 
 SCRIPT_NAME="$(basename $0)"
-SCRIPT_VERSION="0.20150810"
+SCRIPT_VERSION="0.20151123"
 
 source $(dirname $0)/_base.inc.sh
 
@@ -18,60 +18,166 @@ usage() {
 	echo "Usage:"
 	echo "  $SCRIPT_NAME"
 	echo "  $SCRIPT_NAME [--version|--help]"
-	echo "  $SCRIPT_NAME <governor>"
-	echo
-	echo "If called without any arguments, the current status is shown"
+	echo "  $SCRIPT_NAME <mode>"
 	echo
 	echo "Options:"
 	echo "  --version -V  Show the version and exit"
 	echo "  --help    -h  Show this help and exit"
 	echo
-	echo "Supported governors:"
-	echo "  powersave"
-	echo "  ondemand"
-	echo "  performance"
+	echo "Supported values for mode:"
+	echo "  status       Show current scaling mode and frequency (default)"
+	echo "  powersave    Minimum CPU frequency"
+	echo "  ondemand     Auto-scaling based on system load"
+	echo "  performance  Maximum CPU frequency"
 	echo
 }
 
-if [[ "$1" == "--help" || "$1" == "-h" ]]; then
-	version
-	usage
-	exit 0
+if [[ $# -eq 1 ]]
+then
+	if [[ "$1" == "--help" || "$1" == "-h" ]]
+	then
+		version
+		usage
+		exit 0
+	fi
 fi
 
-if [[ "$(uname -s)" != "Linux" ]]; then
+# 
+# Check if system meets requirements and the cpupower utility is available
+# 
+
+# Only the Linux kernel is supported.
+if [[ "$(uname -s)" != "Linux" ]]
+then
 	echo "${SCRIPT_NAME}: Error: Only Linux supported. Sorry. :(" >&2
 	exit 1
 fi
-if [[ ! -e /sys/class/power_supply/BAT0 ]]; then
+
+# Only run if a battery is installed
+if [[ ! -e /sys/class/power_supply/BAT0 ]]
+then
 	echo "${SCRIPT_NAME}: Error: No battery found. Exit." >&2
 	exit 1
 fi
-if which cpupower &>/dev/null; then
-	true
+
+# Check for sudo
+if which sudo &>/dev/null
+then
+	SUDO=$(which sudo)
+else
+	SUDO=
+	if [[ $UID -ne 0 ]]
+	then
+		echo "${SCRIPT_NAME}: Error: sudo not found. Please run as root (UID 0)" >&2
+		exit 1
+	fi
+fi
+
+# Check for cpupower
+if which cpupower &>/dev/null
+then
+	CPUPOWER=$(which cpupower)
 else
 	echo "${SCRIPT_NAME}: Error: cpupower not installed or not in \$PATH. Exit." >&2
 	exit 1
 fi
 
-if [[ $# -eq 0 ]]; then
+set_governor() {
+	governor="$1"
+	LC_ALL=C $SUDO $CPUPOWER frequency-set -g "${governor}" | \
+		sed "s/Setting cpu:/CPU/g;s/$/: ${governor}/g"
+}
+mode_status() {
+	# 
+	# Show current status
+	# 
 	echo -n "Current CPU frequency: "
-	LC_ALL=C sudo cpupower frequency-info | grep 'CPU frequency' | cut -d" " -f7-8
+	LC_ALL=C $SUDO $CPUPOWER frequency-info | \
+		grep 'CPU frequency' | \
+		cut -d" " -f7-8
 	
 	echo -n "Current CPU scaling:   "
-	LC_ALL=C sudo cpupower frequency-info | grep 'The governor' | cut -d\" -f2
-	exit 0
-elif [[ "$1" == "powersave" ]]; then
-	sudo cpupower frequency-set -g powersave | sed 's/Setting cpu:/CPU/g;s/$/: powersave/g' 
-elif [[ "$1" == "ondemand" ]]; then
-	sudo cpupower frequency-set -g ondemand | sed 's/Setting cpu:/CPU/g;s/$/: ondemand/g' 
-elif [[ "$1" == "performance" ]]; then
-	sudo cpupower frequency-set -g performance | sed 's/Setting cpu:/CPU/g;s/$/: performance/g' 
-elif [[ "${1:0:1}" == "-" ]]; then
-	echo "Unknown option: $1" >&2
-	usage >&2
+	LC_ALL=C $SUDO $CPUPOWER frequency-info | \
+		grep 'The governor' | \
+		cut -d\" -f2
+}
+mode_powersave() {
+	# 
+	# Set "powersave" mode
+	# 
+	set_governor powersave
+}
+mode_ondemand() {
+	# 
+	# Set "ondemand" mode
+	# 
+	set_governor ondemand
+}
+mode_performance() {
+	# 
+	# Set "performance" mode
+	# 
+	set_governor performance
+}
+error_exit() {
+	exec 1>&2
+	
+	ERROR_VARIANT="$1"
+	ERROR_REASON="$2"
+	
+	if [[ "${ERROR_VARIANT}" == "usage" ]]
+	then
+		echo "${SCRIPT_NAME}: Invalid ${ERROR_VARIANT} -- '${ERROR_REASON}'"
+		echo "Run '${SCRIPT_NAME} --help' for more information"
+	else
+		usage
+	fi
 	exit 1
+}
+
+if [[ $# -eq 0 ]]; then
+	# 
+	# No argument -> show current status
+	# 
+	MODE="status"
+	
+elif [[ $# -eq 1 ]]
+then
+	# 
+	# One argument, seems valid...
+	# 
+	
+	VALID_MODES="status powersave ondemand performance"
+	
+	MODE="$1"
+	
+	if ! echo $VALID_MODES | grep $MODE &>/dev/null
+	then
+		if [[ "${1:0:1}" == "-" ]]; then
+			error_exit "option" "$1"
+		else
+			error_exit "mode" "$1"
+		fi
+	fi
 else
-	echo "${SCRIPT_NAME}: Error: Unknown/unsupported governor $1" >&2
-	exit 1
+	error_exit "usage"
 fi
+
+# 
+# Apply mode
+# 
+
+if [[ $MODE == "status" ]]
+then
+	mode_status
+elif [[ $MODE == "powersave" ]]
+then
+	mode_powersave
+elif [[ $MODE == "ondemand" ]]
+then
+	mode_ondemand
+elif [[ $MODE == "performance" ]]
+then
+	mode_performance
+fi
+
