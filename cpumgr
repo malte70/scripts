@@ -10,7 +10,7 @@
 # 
 
 SCRIPT_NAME="$(basename $0)"
-SCRIPT_VERSION="0.20151123.1"
+SCRIPT_VERSION="0.20151123.2"
 
 source $(dirname $0)/_base.inc.sh
 
@@ -25,12 +25,12 @@ usage() {
 	echo "  --help    -h  Show this help and exit"
 	echo
 	echo "Supported values for mode:"
-	echo "  status       Show current scaling mode and frequency (default)"
-	echo "  auto         Sets either \"powersave\" or \"performance\" depending on wether"
-	echo "               a power cord is connected or not"
-	echo "  powersave    Minimum CPU frequency"
-	echo "  ondemand     Auto-scaling based on system load"
-	echo "  performance  Maximum CPU frequency"
+	echo "       status       Show current scaling mode and frequency (default)"
+	echo "       auto         Sets either \"powersave\" or \"performance\" depending on wether"
+	echo "                    a power cord is connected or not"
+	echo "  min, powersave    Minimum CPU frequency"
+	echo "  std, ondemand     Auto-scaling based on system load"
+	echo "  max, performance  Maximum CPU frequency"
 	echo
 }
 
@@ -162,7 +162,7 @@ then
 	# One argument, seems valid...
 	# 
 	
-	VALID_MODES="status auto powersave ondemand performance"
+	VALID_MODES="status auto min powersave std ondemand max performance"
 	
 	MODE="$1"
 	
@@ -172,6 +172,17 @@ then
 			error_exit "option" "$1"
 		else
 			error_exit "mode" "$1"
+		fi
+	else
+		if [[ $MODE == "min" ]]
+		then
+			MODE="powersave"
+		elif [[ $MODE == "std" ]]
+		then
+			MODE="ondemand"
+		elif [[ $MODE == "max" ]]
+		then
+			MODE="performance"
 		fi
 	fi
 else
