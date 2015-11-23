@@ -81,23 +81,38 @@ fi
 
 set_governor() {
 	governor="$1"
-	LC_ALL=C $SUDO $CPUPOWER frequency-set -g "${governor}" | \
-		sed "s/Setting cpu:/CPU/g;s/$/: ${governor}/g"
+	OUTPUT=$(LC_ALL=C $SUDO $CPUPOWER frequency-set -g "${governor}" | \
+		sed "s/Setting cpu:/Setting governor for CPU/g" | \
+		sed "s/$/: ${governor}/g" | \
+		tr "\n" "§")
+	
+	if [[ $VERBOSE == "yes" ]]
+	then
+		echo -n $OUTPUT | tr "§" "\n"
+	fi
 }
+
 mode_status() {
 	# 
 	# Show current status
 	# 
-	echo -n "Current CPU frequency: "
-	LC_ALL=C $CPUPOWER frequency-info | \
+	STATUS_FREQUENCY=$(LC_ALL=C $CPUPOWER frequency-info | \
 		grep 'CPU frequency' | \
-		cut -d" " -f7-8
-	
-	echo -n "Current CPU scaling:   "
-	LC_ALL=C $CPUPOWER frequency-info | \
+		cut -d" " -f7-8 | \
+		sed 's/\.$//g')
+	STATUS_GOVERNOR=$(LC_ALL=C $CPUPOWER frequency-info | \
 		grep 'The governor' | \
-		cut -d\" -f2
+		cut -d\" -f2)
+	
+	if [[ $VERBOSE == "yes" ]]
+	then
+		echo "Current CPU frequency: ${STATUS_FREQUENCY}"
+		echo "Current CPU scaling:   ${STATUS_GOVERNOR}"
+	else
+		echo "CPU scaled by \"${STATUS_GOVERNOR}\" at ${STATUS_FREQUENCY}"
+	fi
 }
+
 mode_powersave() {
 	# 
 	# Set "powersave" mode
@@ -151,6 +166,17 @@ check_sudo() {
 		exit 1
 	fi
 }
+
+VERBOSE="no"
+if [[ $# -eq 2 && $1 == "-v" ]]
+then
+	VERBOSE="yes"
+	shift
+elif [[ $# -eq 2 && $1 == "--verbose" ]]
+then
+	VERBOSE="yes"
+	shift
+fi
 
 if [[ $# -eq 0 ]]
 then
