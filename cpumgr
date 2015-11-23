@@ -68,11 +68,6 @@ then
 	SUDO=$(which sudo)
 else
 	SUDO=
-	if [[ $UID -ne 0 ]]
-	then
-		echo "${SCRIPT_NAME}: Error: sudo not found. Please run as root (UID 0)" >&2
-		exit 1
-	fi
 fi
 
 # Check for cpupower
@@ -94,12 +89,12 @@ mode_status() {
 	# Show current status
 	# 
 	echo -n "Current CPU frequency: "
-	LC_ALL=C $SUDO $CPUPOWER frequency-info | \
+	LC_ALL=C $CPUPOWER frequency-info | \
 		grep 'CPU frequency' | \
 		cut -d" " -f7-8
 	
 	echo -n "Current CPU scaling:   "
-	LC_ALL=C $SUDO $CPUPOWER frequency-info | \
+	LC_ALL=C $CPUPOWER frequency-info | \
 		grep 'The governor' | \
 		cut -d\" -f2
 }
@@ -149,8 +144,16 @@ error_exit() {
 	fi
 	exit 1
 }
+check_sudo() {
+	if [[ -z $SUDO && $UID -ne 0 ]]
+	then
+		echo "${SCRIPT_NAME}: Error: sudo not found. Please run as root (UID 0)" >&2
+		exit 1
+	fi
+}
 
-if [[ $# -eq 0 ]]; then
+if [[ $# -eq 0 ]]
+then
 	# 
 	# No argument -> show current status
 	# 
@@ -196,17 +199,21 @@ fi
 if [[ $MODE == "status" ]]
 then
 	mode_status
-elif [[ $MODE == "powersave" ]]
-then
-	mode_powersave
-elif [[ $MODE == "ondemand" ]]
-then
-	mode_ondemand
-elif [[ $MODE == "performance" ]]
-then
-	mode_performance
-elif [[ $MODE == "auto" ]]
-then
-	mode_auto
+else
+	check_sudo
+	
+	if [[ $MODE == "powersave" ]]
+	then
+		mode_powersave
+	elif [[ $MODE == "ondemand" ]]
+	then
+		mode_ondemand
+	elif [[ $MODE == "performance" ]]
+	then
+		mode_performance
+	elif [[ $MODE == "auto" ]]
+	then
+		mode_auto
+	fi
 fi
 
