@@ -10,7 +10,7 @@
 # 
 
 SCRIPT_NAME="$(basename $0)"
-SCRIPT_VERSION="0.20151123"
+SCRIPT_VERSION="0.20151123.1"
 
 source $(dirname $0)/_base.inc.sh
 
@@ -26,6 +26,8 @@ usage() {
 	echo
 	echo "Supported values for mode:"
 	echo "  status       Show current scaling mode and frequency (default)"
+	echo "  auto         Sets either \"powersave\" or \"performance\" depending on wether"
+	echo "               a power cord is connected or not"
 	echo "  powersave    Minimum CPU frequency"
 	echo "  ondemand     Auto-scaling based on system load"
 	echo "  performance  Maximum CPU frequency"
@@ -119,6 +121,19 @@ mode_performance() {
 	# 
 	set_governor performance
 }
+mode_auto() {
+	# 
+	# Auto mode-setting depending on power source
+	# 
+	if [[ 0 -eq $(cat /sys/class/power_supply/ADP?/online) ]]
+	then
+		# Running on battery
+		$0 powersave
+	else
+		# Running from power grid
+		$0 ondemand
+	fi
+}
 error_exit() {
 	exec 1>&2
 	
@@ -147,7 +162,7 @@ then
 	# One argument, seems valid...
 	# 
 	
-	VALID_MODES="status powersave ondemand performance"
+	VALID_MODES="status auto powersave ondemand performance"
 	
 	MODE="$1"
 	
@@ -179,5 +194,8 @@ then
 elif [[ $MODE == "performance" ]]
 then
 	mode_performance
+elif [[ $MODE == "auto" ]]
+then
+	mode_auto
 fi
 
