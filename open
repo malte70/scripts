@@ -40,7 +40,7 @@ elif [[ "$1" == "--help" || "$1" == "-h" ]]; then
 fi
 
 if [[ -z "$DISPLAY" ]]; then
-    echo "$0: Error: \$DISPLAY not set!" >&2
+    echo "$SCRIPT_NAME: Error: \$DISPLAY not set!" >&2
     exit 1
 fi
 
@@ -58,12 +58,17 @@ else
     elif which xdg-open &>/dev/null; then
         APP="xdg-open"
     else
-        echo "$0: Error: xdg-open not found!" >&2
+        echo "$SCRIPT_NAME: Error: xdg-open not found!" >&2
         exit 1
     fi
 fi
 
 FILE="$1"
+
+if [[ ! -r $FILE ]]; then
+	echo "$SCRIPT_NAME: File not found or not readable: $FILE" >&2
+	exit 1
+fi
 
 $APP $FILE </dev/null &>/dev/null &|
 
