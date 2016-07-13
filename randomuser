@@ -41,11 +41,11 @@ def run():
 	json_string = response.read().decode("utf-8")
 	parsed_json = json.loads(json_string)
 	user = User(
-			gender = parsed_json["results"][0]["user"]["gender"],
-			name = ucfirst(parsed_json["results"][0]["user"]["name"]["first"])+" "+ucfirst(parsed_json["results"][0]["user"]["name"]["last"]),
-			email = parsed_json["results"][0]["user"]["email"],
-			username = parsed_json["results"][0]["user"]["username"],
-			password = parsed_json["results"][0]["user"]["password"],
+			gender = parsed_json["results"][0]["gender"],
+			name = ucfirst(parsed_json["results"][0]["name"]["first"])+" "+ucfirst(parsed_json["results"][0]["name"]["last"]),
+			email = parsed_json["results"][0]["email"],
+			username = parsed_json["results"][0]["login"]["username"],
+			password = parsed_json["results"][0]["login"]["password"],
 		)
 	print("Name........: "+user.getName())
 	print("Gender......: "+user.getGender())
