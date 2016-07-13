@@ -48,10 +48,11 @@ fi
 
 _md2html() {
 	markdown="$1"
+	markdown_filename=$(basename "${markdown}")
 	html="$2"
 	pandoc --from markdown_github --to html5 --standalone "$markdown" --output "$html"
 	
-	sed -i "s/title>/title>$1/" "$2"
+	sed -i "s/title>/title>${markdown_filename}/" "$2"
 	ADDITIONAL_STYLES="body{font: 18px 'Source Serif Pro';margin-left: 4em}"
 	ADDITIONAL_STYLES="${ADDITIONAL_STYLES}body>*{margin-bottom:1em;margin-top:0.8em;}"
 	ADDITIONAL_STYLES="${ADDITIONAL_STYLES}pre{background:#ddd;border:1px solid #aaa;padding:1em;}"
