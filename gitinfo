@@ -6,13 +6,13 @@
 # Shows information about a git repository
 # for the zsh prompt.
 #
-# Copyright (c) 2014-2015 Malte Bublitz, http://malte-bublitz.de
+# Copyright (c) 2014-2016 Malte Bublitz, http://malte70.bplaced.net
 # All rights reserved.
 #
 
 SCRIPT_NAME="gitinfo"
 SCRIPT_PROJECT_NAME=""
-SCRIPT_VERSION="0.20150802"
+SCRIPT_VERSION="0.20161227"
 
 CACHEDIR="$HOME/.cache/gitinfo"
 CACHEFILE="${CACHEDIR}/`pwd | tr '/' '='`"
@@ -78,25 +78,29 @@ else
 		if [[ $? -eq 128 ]]; then
 			BRANCH="master"
 		fi
+		
+		# 
+		# Show shortcuts for some known remotes
+		# 
 		if [[ "${REMOTE:0:14}" == "git@github.com" ]]; then
 			UPSTREAM="${REMOTE:15:-4}:$BRANCH"
+			
 		elif [[ "${REMOTE:0:19}" == "git@gist.github.com" ]]; then
-			UPSTREAM="Gist/${REMOTE:20:-4}:$BRANCH"
+			UPSTREAM="gist/${REMOTE:20:-4}:$BRANCH"
+			
 		elif [[ "${REMOTE:0:19}" == "https://github.com/" ]]; then
 			UPSTREAM="`echo ${REMOTE:19} | sed 's/.git//g'`:$BRANCH"
-		elif [[ "${REMOTE:0:15}" == "git@git.mcbx.de" ]]; then
-			UPSTREAM="git.mcbx.de/`echo ${REMOTE:16} | sed 's/.git//g'`:$BRANCH"
-		elif [[ "${REMOTE:0:16}" == "git@repos.dma.do" ]]; then
-			UPSTREAM="repos.dma.do/${REMOTE:17:-4}:$BRANCH"
-		elif [[ "${REMOTE:0:31}" == "ssh://storage@abyss.mcbx.de:22/" ]]; then
-			UPSTREAM="SparkleShare:${REMOTE:44}"
-		elif [[ "${REMOTE:0:29}" == "ssh://aur@aur4.archlinux.org/" ]]; then
-			UPSTREAM="AUR:${REMOTE:29:-4}"
+			
 		elif [[ "${REMOTE:0:28}" == "ssh://aur@aur.archlinux.org/" ]]; then
-			UPSTREAM="AUR:${REMOTE:28:-4}"
+			UPSTREAM="aur-ssh/${REMOTE:28:-4}"
+			
+		elif [[ "${REMOTE:0:26}" == "https://aur.archlinux.org/" ]]; then
+			UPSTREAM="aur/${REMOTE:26:-4}"
+			
 		else
 			UPSTREAM="${REMOTE}:$BRANCH"
 		fi
+		
 		echo -n $UPSTREAM > $CACHEFILE
 	fi
 	# number of uncommited changes
