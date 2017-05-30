@@ -9,9 +9,6 @@
 # All rights reserved.
 # 
 
-#asdf() {
-#}
-
 SCRIPT_NAME="$(basename $0)"
 SCRIPT_VERSION="0.20151104"
 
@@ -96,10 +93,6 @@ if [[ $OS == "GNU/Linux" ]]; then
 		yaourt -Syu --aur
 		message "$OSVARIANT :: Cleanup"
 		yaourt -Qqdt &>/dev/null && yaourt -R $(y -Qqdt)
-		if [[ -d /var/abs ]]; then
-			message "$OSVARIANT :: Syncing Arch Build System"
-			abs
-		fi
 		
 	elif [[ $OSVARIANT == "Debian" || $OSVARIANT == "Ubuntu" ]]; then
 		message "$OSVARIANT :: Update"
