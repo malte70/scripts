@@ -55,13 +55,6 @@ then
 	exit 1
 fi
 
-# Only run if a battery is installed
-if [[ ! -e /sys/class/power_supply/BAT0 ]]
-then
-	echo "${SCRIPT_NAME}: Error: No battery found. Exit." >&2
-	exit 1
-fi
-
 # Check for sudo
 if which sudo &>/dev/null
 then
