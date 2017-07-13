@@ -95,6 +95,7 @@ info_wm() {
 	ps x | grep "awesome" | grep -v grep >/dev/null && WM="Awesome"
 	ps x | grep "startkde" | grep -v grep >/dev/null && WM="KDE $(kde-open --version | grep KDE | cut -d\  -f2)"
 	ps x | grep "SystemUIServer" | grep -v grep >/dev/null && WM="Aqua"
+	ps x | grep "cinnamon" | grep -v grep >/dev/null && WM="$(cinnamon --version)"
 	#[ -z $WM -o $WM = "None" ] && WM="Unknown"
 	echo $WM
 }
