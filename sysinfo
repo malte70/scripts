@@ -5,8 +5,8 @@ LOCALE_OLD=$LC_ALL
 export LC_ALL=C
 
 version_info() {
-	echo "sysinfo 20141010"
-	echo "Copyright (c) 2014 Malte Bublitz"
+	echo "sysinfo 0.20180713"
+	echo "Copyright (c) 2014-2018 Malte Bublitz"
 }
 display_help() {
 	version_info
@@ -50,6 +50,8 @@ info_os() {
 		[ `uname -r` == "10.0-RELEASE" ] && echo -n " 4.0"
 	elif [ `uname -o` == "Cygwin" ]; then
 		python -c 'import OSDetect; _i = OSDetect.OSInfo(); print _i.GetInfo()["Distribution"]' | tr -d "\n"
+	elif [ `uname -o` == "Android" ]; then
+		echo -n "$(uname -o) $(getprop ro.build.version.release) (API Level $(getprop ro.build.version.sdk))"
 	else
 		uname -o | tr -d "\n"
 	fi
@@ -72,8 +74,12 @@ info_kernel() {
 info_nodename() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 9))');'`
 	echo -n "Hostname${DOTS}: "
-	hostname -f 2>/dev/null
-	[[ $? -ne 0 ]] && hostname
+	if [ -z "$TERMUX_ROOT" ]; then
+		hostname -f 2>/dev/null
+		[[ $? -ne 0 ]] && hostname
+	else
+		getprop net.hostname
+	fi
 }
 info_uptime() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
@@ -82,6 +88,9 @@ info_uptime() {
 		LC_ALL=C uptime | python -c 'import sys;l = sys.stdin.readline().split(","); print " ".join(l[:-2])' | cut -d" " -f4-
 	elif [ `uname -o ` == Cygwin ]; then
 		python -c 'import OSDetect; _i = OSDetect.OSInfo(); print _i.GetInfo()["Uptime"]'
+	elif [ -n "$TERMUX_ROOT" ]; then
+		# Termux's uptime doesn't show the user count!
+		LC_ALL=C uptime | python -c 'import sys;l = sys.stdin.readline().split(","); print(" ".join(l[:-3]))' | cut -d" " -f4- | stripwhite
 	else
 		LC_ALL=C uptime | python2 -c 'import sys;l = sys.stdin.readline().split(","); print " ".join(l[:-4])' | cut -d" " -f4- | stripwhite
 	fi
@@ -146,6 +155,10 @@ info_cpu() {
 		fi
 	fi
 }
+info_android() {
+	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
+	echo "Device${DOTS}: `getprop ro.config.marketing_name` (`getprop ro.product.model`)"
+}
 info_env() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
 	[ -n $SHELL ] && echo "\$SHELL${DOTS}: `basename $SHELL`"
@@ -170,7 +183,11 @@ info_all() {
 	info_uptime
 	info_wm
 	info_mem
-	info_cpu
+	if [ -z "$TERMUX_ROOT" ]; then
+		info_cpu
+	else
+		info_android
+	fi
 	info_env
 	info_locale
 }
