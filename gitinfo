@@ -12,7 +12,7 @@
 
 SCRIPT_NAME="gitinfo"
 SCRIPT_PROJECT_NAME=""
-SCRIPT_VERSION="0.20161227"
+SCRIPT_VERSION="0.20180909"
 
 CACHEDIR="$HOME/.cache/gitinfo"
 CACHEFILE="${CACHEDIR}/`pwd | tr '/' '='`"
@@ -96,6 +96,9 @@ else
 			
 		elif [[ "${REMOTE:0:26}" == "https://aur.archlinux.org/" ]]; then
 			UPSTREAM="aur/${REMOTE:26:-4}"
+			
+		elif [[ "${REMOTE:0:23}" == "https://git.heroku.org/" ]]; then
+			UPSTREAM="heroku/${REMOTE:23:-4}"
 			
 		else
 			UPSTREAM="${REMOTE}:$BRANCH"
