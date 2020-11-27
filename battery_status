@@ -50,7 +50,7 @@ class Battery(object):
 	_isDischarging   = False
 	
 	def __init__(self):
-		self.currentOS = OSDetect.info["OS"]
+		self.currentOS = OSDetect.info.get("OS")
 		if self.currentOS != "Linux":
 			raise PlatformNotSupportedException("Only Linux supported")
 			
@@ -127,11 +127,11 @@ class Battery(object):
 			pass
 		
 	def readInfo(self):
-		if self.currentOS == "Linux" and OSDetect.info["OSVersion"].split(".")[0] == "4":
+		if self.currentOS == "Linux" and int(OSDetect.info.get("OSVersion").split(".")[0]) >= 4:
 			self.currentOS = "Linux4"
 		
 		if self.currentOS == "Linux":
-			self.readInfoLinux3()
+			self.readInfoLinux()
 		elif self.currentOS == "Linux4":
 			self.readInfoLinux4()
 			
