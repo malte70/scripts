@@ -1,59 +1,84 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Website screenshot generator
 #
-# Copyright (c) 2013 Malte Bublitz.
+# Copyright (c) 2013,2021 Malte Bublitz.
 # All rights reserved.
 #
 # Licensed under the terms of the 2-clause BSD license.
 # See LICENSE for details.
-#
+# 
+# Links:
+#  - https://www.lambdatest.com/blog/python-selenium-screenshots/
+#  - https://pythonbasics.org/selenium-screenshot/
+#  - https://www.vionblog.com/selenium-headless-firefox-webdriver-using-pyvirtualdisplay/
+# 
 
 import sys
+import time
 try:
 	from pyvirtualdisplay import Display
 except ImportError:
-	print "Please install python-pyvirtualdisplay."
-	print "Get it at https://pypi.python.org/pypi/PyVirtualDisplay"
+	print("Please install python-pyvirtualdisplay.", file=sys.stderr)
+	print("Get it at https://pypi.python.org/pypi/PyVirtualDisplay", file=sys.stderr)
 	sys.exit(1)
 try:
 	from selenium import webdriver
 except ImportError:
-	print "Please install python2-selenium."
-	print "Get it at http://pypi.python.org/pypi/selenium"
+	print("Please install python2-selenium.", file=sys.stderr)
+	print("Get it at http://pypi.python.org/pypi/selenium", file=sys.stderr)
 	sys.exit(1)
 
 def main():
-	verbose = False
-	if sys.argv[1]=="-v" or sys.argv[1]=="--version":
-		del sys.argv[1]
-		verbose=True
-
-	if verbose:print "Setting up display (size 1280x1024)...",
-	display = Display(visible=0, size=(1280, 1024))
-	if verbose:print "done."
-
-	if verbose:print "Starting display...",
+	WIDTH, HEIGHT   = DISPLAY_SIZE = (1280, 1024)
+	FIREFOX_TIMEOUT = 30
+	SLEEP_TIME      = 30
+	
+	display = Display(visible=0, size=DISPLAY_SIZE)
 	display.start()
-	if verbose:print "done."
-
-	if verbose:print "Starting Browser...",
+	
 	browser = webdriver.Firefox()
-	if verbose:print "done."
-
-	if verbose:print "Getting web page...",
+	browser.set_window_size(WIDTH, HEIGHT)
+	
 	browser.get(sys.argv[1])
-	if verbose:print "done."
-
-	if verbose:print "Saving Screenshot...",
+	
+	# Set timeouts
+	browser.set_script_timeout(FIREFOX_TIMEOUT)
+	browser.set_page_load_timeout(FIREFOX_TIMEOUT)
+	
+	# Wait a few seconds so the page get's rendered...
+	time.sleep(SLEEP_TIME)
+	
+	# Save screenshot
 	browser.save_screenshot(sys.argv[2])
-	if verbose:print "done."
-
-	if verbose:print "Cleaning up...",
+	
+	# Bye bye...
 	browser.quit()
 	display.stop()
-	if verbose:print "done."
-
+	
 if __name__=="__main__":
+	for arg in sys.argv:
+		"""if arg in ("-h", "--help") or len(sys.argv) == 1:
+			print("Usage:\n\twebsite-screenshot <-h|--help|-V|--version>")
+			print("\twebsite-screenshot <url> <screenshot filename>")
+			print()
+			sys.exit(0)
+			"""
+		if arg in ("-V", "--version"):
+			print("website-screenshot 0.2")
+			sys.exit(0)
+			
+		elif arg.startswith("-"):
+			print("Unknown option: "+arg)
+			sys.exit(1)
+			
+		elif arg in ("-h", "--help") or len(sys.argv) != 3:
+			print("Usage:")
+			print("\twebsite-screenshot <-h|--help|-V|--version>")
+			print("\twebsite-screenshot <url> <screenshot filename>")
+			print()
+			sys.exit(0 if arg in ("-h","--help") else 1)
+			
 	main()
+	
