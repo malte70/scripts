@@ -70,5 +70,10 @@ if [[ ! -r $FILE ]]; then
 	exit 1
 fi
 
+if ! which $APP &>/dev/null; then
+	echo "$SCRIPT_NAME: Command not found: $APP" >&2
+	exit 1
+fi
+
 $APP $FILE </dev/null &>/dev/null &|
 
