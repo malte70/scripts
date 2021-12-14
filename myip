@@ -2,9 +2,26 @@
 #
 # Show current IP
 #
-# Copyright (c) 2013,2014 Malte Bublitz
+# Copyright (c) 2013,2014,2021 Malte Bublitz
 # All rights reserved.
 #
+
+get_external_ip() {
+	IPINFO_FINGER="ip@ip.malte70.de"
+	IPINFO_HTTP_API="https://ip.malte70.de/api.php/ip"
+	
+	#if [[ "$1" == "finger" ]]
+	IP=""
+	if which finger &>/dev/null
+	then
+		IP=$(finger $IPINFO_FINGER 2>/dev/null | grep -v '^\[' | head -n+2)
+	fi
+	if [[ -z "$IP" ]]
+	then
+		IP=$(curl -s $IPINFO_HTTP_API)
+	fi
+	echo $IP | tr -d "\n"
+}
 
 show_help() {
 	echo "myip"
@@ -12,7 +29,7 @@ show_help() {
 	echo "Usage: myip [-4|-6|-g|-a|-x]"
 	echo -e "Options\n\t-4\tShow IPv4 address"
 	echo -e "\t-6\tShow IPv6 address"
-	echo -e "\t-g\tShow global IP using ip.malte-bublitz.de API"
+	echo -e "\t-g\tShow global IP using ip.malte70.de API"
 	echo -e "\t-a\tShow all informations at once"
 	echo -e "\t-x\tExtended/expert output mode"
 }
@@ -92,10 +109,5 @@ fi
 
 # Global IP
 if [ $SHOW_GLOBAL == "yes" ]; then
-	if which finger &>/dev/null
-	then
-		finger ip@ip.malte-bublitz.de | tail -n+2
-	else
-		curl http://ip.malte-bublitz.de; echo
-	fi
+	echo $(get_external_ip)
 fi
