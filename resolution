@@ -1,0 +1,76 @@
+#!/bin/zsh
+# 
+# Screen Resize
+# 
+# Only works on my notebook, since absolutely everything
+# is hardcoded...
+# 
+
+if [[ $# -eq 0 ]]; then
+	res=$(zenity --list \
+		--title "Bildschirmlayout" \
+		--column "Name" --column "Beschreibung" \
+		"eDP1"       "Nur interner Bildschirm" \
+		"eDP1+HDMI"  "Interner Bildschirm neben HDMI (beide Full HD)" \
+		"eDP1=HDMI"  "Bildschirm spiegeln" \
+		"HDMI-720p"  "HDMI 720p/HD Ready" \
+		"HDMI-HD"    "HDMI 1080p/HD" \
+		"HDMI-4K"    "HDMI 2160p/4K")
+	
+else
+	res=$1
+fi
+
+case $res in
+	"eDP1")
+		xrandr \
+			--output eDP1     --primary --mode 1920x1080 --pos 0x0 --rotate normal \
+			--output DP1      --off \
+			--output HDMI1    --off \
+			--output HDMI2    --off \
+			--output VIRTUAL1 --off
+		;;
+	"eDP1+HDMI")
+		xrandr \
+			--output eDP1     --primary --mode 1920x1080 --pos 0x0    --rotate normal \
+			--output HDMI1              --mode 1920x1080 --pos 1920x0 --rotate normal \
+			--output HDMI2    --off \
+			--output DP1      --off \
+			--output VIRTUAL1 --off
+		;;
+	"eDP1=HDMI")
+		xrandr \
+			--output eDP1     --primary --mode 1920x1080 --pos 0x0 --rotate normal \
+			--output HDMI1              --mode 1920x1080 --pos 0x0 --rotate normal \
+			--output HDMI2    --off \
+			--output DP1      --off \
+			--output VIRTUAL1 --off
+		;;
+	"HDMI-720p")
+		xrandr \
+			--output eDP1     --off \
+			--output HDMI1    --primary --mode 1280x720 --pos 0x0 --rotate normal \
+			--output HDMI2    --off \
+			--output DP1      --off \
+			--output VIRTUAL1 --off
+		;;
+	"HDMI-HD")
+		xrandr \
+			--output eDP1     --off \
+			--output HDMI1    --primary --mode 1920x1080 --pos 0x0 --rotate normal \
+			--output HDMI2    --off \
+			--output DP1      --off \
+			--output VIRTUAL1 --off
+		;;
+	"HDMI-4K")
+		xrandr \
+			--output eDP1     --off \
+			--output HDMI1    --primary --mode 3840x2160 --pos 0x0 --rotate normal \
+			--output HDMI2    --off \
+			--output DP1      --off \
+			--output VIRTUAL1 --off
+		;;
+	*)
+		echo "Unknown resolution: $res"
+		;;
+esac
