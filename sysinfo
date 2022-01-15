@@ -22,6 +22,7 @@ Reort options
 	-u	Uptime
 	-w	Window Manager
 	-m	Used/available RAM
+	-H  Hardware Info
 	-c	CPU info
 	-e	Environment (Shell/Editor/Browser)
 	-l  Locale
@@ -139,6 +140,25 @@ info_mem() {
 		$FREE -m | grep ^Mem | awk '{ print $2 "MB" }'
 	fi
 }
+info_hardware() {
+	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 9))');'`
+	echo -n "Hardware${DOTS}: "
+	if [ `uname` == "Linux" ]; then
+		if [ -r "/sys/devices/virtual/dmi/id/product_name" ]; then
+			if grep KVM /sys/devices/virtual/dmi/id/product_name &>/dev/null; then
+				echo "Virtual Machine (KVM)"
+			elif grep "^flags" /proc/cpuinfo | grep hypervisor &>/dev/null; then
+				echo "Virtual Machine"
+			else
+				cat /sys/devices/virtual/dmi/id/product_name
+			fi
+		elif [ -r /sys/firmware/devicetree/base/model ]; then
+			cat /sys/firmware/devicetree/base/model
+		fi
+	else
+		echo "Unable to detect"
+	fi
+}
 info_cpu() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 4))');'`
 	echo -n "CPU${DOTS}: "
@@ -187,6 +207,7 @@ info_all() {
 	info_wm
 	info_mem
 	if [ -z "$TERMUX_ROOT" ]; then
+		info_hardware
 		info_cpu
 	else
 		info_android
@@ -209,7 +230,7 @@ fi
 DESC_COL_LENGTH=2
 
 # parse arguments once to get $DESC_COL_LENGTH
-while getopts "Vhornuwmeplac" opt; do
+while getopts "VhornuwmeplacH" opt; do
 	case $opt in
 		o)
 			if [[ $DESC_COL_LENGTH -lt 3 ]]; then
@@ -226,7 +247,7 @@ while getopts "Vhornuwmeplac" opt; do
 				DESC_COL_LENGTH=8
 			fi
 			;;
-		h)
+		H)
 			if [[ $DESC_COL_LENGTH -lt 8 ]]; then
 				DESC_COL_LENGTH=8
 			fi
@@ -251,6 +272,11 @@ while getopts "Vhornuwmeplac" opt; do
 				DESC_COL_LENGTH=3
 			fi
 			;;
+		h)
+			if [[ $DESC_COL_LENGTH -lt 9 ]]; then
+				DESC_COL_LENGTH=9
+			fi
+			;;
 		c)
 			if [[ $DESC_COL_LENGTH -lt 4 ]]; then
 				DESC_COL_LENGTH=4
@@ -272,7 +298,7 @@ done
 OPTIND=1
 
 # parse arguments again, and now, display the information.
-while getopts "Vhornuwmpelac" opt; do
+while getopts "VhornuwmpelaHc" opt; do
 	case $opt in
 		V)
 			version_info
@@ -302,6 +328,9 @@ while getopts "Vhornuwmpelac" opt; do
 			;;
 		m)
 			info_mem
+			;;
+		H)
+			info_hardware
 			;;
 		c)
 			info_cpu
