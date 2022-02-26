@@ -183,12 +183,34 @@ info_android() {
 	echo "Device${DOTS}: `getprop ro.config.marketing_name` (`getprop ro.product.model`)"
 }
 info_env() {
+    # 
+    # $SHELL
+    # 
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
-	[ -n $SHELL ] && echo "\$SHELL${DOTS}: `basename $SHELL`"
+	[ -n "$SHELL" ] && echo "\$SHELL${DOTS}: `basename $SHELL`"
+	
+    # 
+    # $EDITOR
+    # 
+    if [ -n "$EDITOR" ]; then
+        # Values might be "vim" or "/bin/vim", so run which before basename!
+        ENV_EDITOR="$(basename $(which $EDITOR))"
+    else
+        ENV_EDITOR=""
+    fi
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 8))');'`
-	[ -n $EDITOR ] && echo "\$EDITOR${DOTS}: `basename $EDITOR`"
+	[ -n "$ENV_EDITOR" ] && echo "\$EDITOR${DOTS}: $ENV_EDITOR"
+    
+    # 
+    # $BROWSER
+    # 
+    if [ -n "$BROWSER" ]; then
+        ENV_BROWSER="$(basename $(which $BROWSER))"
+    else
+        ENV_BROWSER=""
+    fi
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 9))');'`
-	[ -f "$BROWSER" ] && echo "\$BROWSER${DOTS}: `basename "$BROWSER"`"
+	[ -n "$ENV_BROWSER" ] && echo "\$BROWSER${DOTS}: $ENV_BROWSER"
 }
 info_locale() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
