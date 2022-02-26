@@ -1,0 +1,161 @@
+#!/usr/bin/zsh
+# 
+# Show information for a user
+# 
+# Uses getent(1), so it should also work if you use Kerberos/LDAP/AD/...
+#
+# File syntax (at least if using regular /etc/passwd and /etc/group files):
+# 
+#   passwd -> (1)    (2)(3)  (4) (5)           (6)           (7)
+#             malte70:x:1000:985:Malte Bublitz:/home/malte70:/usr/bin/zsh
+#   group  -> (1)  (2)(3) (4)
+#             wheel:x:998:malte70,bofh
+# 
+
+SCRIPT_NAME="$(basename $0)"
+SCRIPT_VERSION="0.20220226"
+
+source $(dirname $0)/_base.inc.sh
+
+# Override message_debug()
+functions[message_debug]="if [[ \$DEBUG -eq 1 ]]; then
+	$functions[message_debug]
+fi"
+
+
+# 
+# Usage info
+# 
+usage() {
+	echo "Usage:"
+	echo "  $SCRIPT_NAME"
+	echo "  $SCRIPT_NAME [--version|--help]"
+	echo "  $SCRIPT_NAME [--figlet] <username> [<username2> ...]"
+	echo
+	echo "Options:"
+	echo "  --version -V  Show the version and exit"
+	echo "  --help    -h  Show this help and exit"
+	echo "  --figlet  -F  Display output using figlet"
+	echo
+	echo "If no user names are passwd as an argument, \$USER is used."
+	echo
+}
+
+# 
+# Parse arguments
+#
+CFG_FIGLET=0             # Pass results to figlet?
+CFG_FIGLET_FONT="small"  # figlet font - hard coded at the moment :-(
+CFG_DASHDASH=0           # -- given: interpret everything as a user name, even if the first character is a dash (-)
+CFG_USERS=()             # Users to display information for
+DEBUG=${DEBUG:-0}        # Debug mode (can also get set specified using the environment)
+while [[ $# -gt 0 ]]; do
+	if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+		version
+		usage
+		exit 0
+		
+	elif [[ "$1" == "--version" || "$1" == "-V" ]]; then
+		version
+		exit 0
+		
+	elif [[ "$1" == "--figlet" || "$1" == "-F" ]]; then
+		# Using -F instead of -f since -f is usually used to specify
+		# a file to operate on
+		CFG_FIGLET=1
+		
+	elif [[ "$1" == "--debug" ]]; then
+		# "Easter Egg" - undocumented swith
+		DEBUG=1
+		
+	elif [[ "$1" == "--" ]]; then
+		CFG_DASHDASH=1
+		
+	elif [[ "${1:0:1}" == "-" && $CFG_DASHDASH -ne 1 ]]; then
+		message_error "Unknown argument: $1"
+		exit 1
+		
+	else
+		#message_debug "User given: $1"
+		CFG_USERS+=$1
+		
+	fi
+	
+	shift
+	
+done
+
+# 
+# No user names given - fall back to $USER
+# 
+if [[ ${#CFG_USERS[@]} -eq 0 ]]; then
+	message_debug "No username given as an argument - falling back to \$USER"
+	CFG_USERS+=$USER
+	
+fi
+
+
+# 
+# Arguments and options parsed - time for some debugging info!
+# NOTE: Array output only works with $()! WHY?!?
+# 
+message_debug "CFG_FIGLET      = $CFG_FIGLET"
+message_debug "CFG_FIGLET_FONT = $CFG_FIGLET"
+message_debug "CFG_USERS       = ( $(echo ${CFG_USERS[@]}) )"
+
+
+# 
+# Get information for a single user
+# 
+user_info() {
+	_user=$1
+	
+	echo -n "User: $_user (#"
+	getent passwd $_user | cut -d: -f3 | tr -d "\n"
+	echo ")"
+	
+	echo -n "Real name: "
+	getent passwd $_user | cut -d: -f5
+	
+	echo -n "Groups: "
+	getent group | grep $_user | cut -d: -f1 | sort | tr "\n" " " | sed "s/$/\n/"
+	
+	echo -n "Home: "
+	getent passwd $_user | cut -d: -f6
+	
+	echo -n "Shell: "
+	getent passwd $_user | cut -d: -f7
+	
+}
+
+# 
+# Display results, either using normal output or figlet
+# 
+output() {
+	_output=""
+	while read _l; do
+		_output+="$_l\n"
+	done
+	if [[ $CFG_FIGLET -ne 1 ]]; then
+		echo -n $_output
+		
+	else
+		echo -n $_output | figlet -f $CFG_FIGLET_FONT -t
+		
+	fi
+}
+
+# 
+# Show information for all users in $CFG_USERS
+# 
+for _user in ${CFG_USERS[@]}; do
+	if [[ ${#CFG_USERS[@]} -ne 1 ]]; then
+		# Show a markdown-style heading if multiple users passed
+		echo "# userinfo $_user" | output
+	fi
+	
+	message_debug "Showing info for $_user:"
+	user_info $_user | output
+	
+done
+
