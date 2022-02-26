@@ -63,6 +63,14 @@ message_error() {
 		_println $@
 	) >&2
 }
+message_debug() {
+	(
+		_print_term $_ANSI_COLOR_YELLOW
+		_print "[${SCRIPT_NAME}] [DEBUG] "
+		_print_term $_ANSI_RESET
+		_println $@
+	) >&2
+}
 
 version() {
 	echo "$SCRIPT_NAME $SCRIPT_VERSION"
