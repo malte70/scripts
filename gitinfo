@@ -100,8 +100,8 @@ else
 		elif [[ "${REMOTE:0:23}" == "https://git.heroku.com/" ]]; then
 			UPSTREAM="heroku/${REMOTE:23:-4}"
 			
-		elif [[ "${REMOTE:0:14}" == "git.malte70.de" ]]; then
-			UPSTREAM="gitolite→${REMOTE:15:-4}:$BRANCH"
+		elif [[ "${REMOTE:0:19}" == "gitea@gitea.rt3x.de" ]]; then
+			UPSTREAM="gitea::${REMOTE:20:-4}:$BRANCH"
 			
 		else
 			UPSTREAM="${REMOTE}:$BRANCH"
