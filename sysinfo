@@ -45,7 +45,7 @@ info_os() {
 		)
 	elif [ `uname` == "Darwin" ]; then
 		echo -n "Mac OS X "
-		python -c 'import platform; print platform.mac_ver()[0],' | tr -d "\n"
+		python3 -c 'import platform; print(platform.mac_ver()[0],end="")' | tr -d "\n"
 	elif grep GhostBSD /etc/motd &>/dev/null; then
 		echo -n "GhostBSD"
 		[ `uname -r` == "10.0-RELEASE" ] && echo -n " 4.0"
@@ -86,7 +86,7 @@ info_uptime() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
 	echo -n "Uptime${DOTS}: "
 	if [ `uname` == "Darwin" ]; then
-		LC_ALL=C uptime | python -c 'import sys;l = sys.stdin.readline().split(","); print " ".join(l[:-2])' | cut -d" " -f4-
+		LC_ALL=C uptime | python3 -c 'import sys;l = sys.stdin.readline().split(","); print(" ".join(l[:-2]))' | cut -d" " -f4-
 	elif [ `uname -o ` == Cygwin ]; then
 		python -c 'import OSDetect; _i = OSDetect.OSInfo(); print _i.GetInfo()["Uptime"]'
 	elif [ -n "$TERMUX_ROOT" ]; then
