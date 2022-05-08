@@ -76,7 +76,7 @@ else
 		fi
 		BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
 		if [[ $? -eq 128 ]]; then
-			BRANCH="master"
+			BRANCH="$(git config --global --get init.defaultbranch)"
 		fi
 		
 		# 
