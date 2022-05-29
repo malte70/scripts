@@ -62,6 +62,8 @@ if [[ $# -eq 0 ]]; then
 	fi
 	if which bat &>/dev/null; then
 		bat --paging=never --plain --language markdown "$TODO_FILE"
+	elif which batcat &>/dev/null; then
+		batcat --paging=never --plain --language markdown "$TODO_FILE"
 	else
 		cat "$TODO_FILE"
 	fi
