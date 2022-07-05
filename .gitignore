@@ -1,2 +1,7 @@
 # included in malte70/nowplaying
 nowplaying
+# Python aliases to force using a specific interpreter if there are multiple
+# versions installed
+python
+pip
+pydoc
