@@ -1,12 +1,8 @@
-#!/bin/sh
 # 
 # _base.inc.sh
 #    Part of: malte70's Shell scripts <https://github.com/malte70/scripts>
 # 
 # Basic features for my shell scripts
-# 
-# Copyright (c) 2015 Malte Bublitz, http://malte-bublitz.de
-# All rights reserved.
 # 
 
 _ANSI_ESCAPE=$(printf "\e")
@@ -32,20 +28,22 @@ _ANSI_COLOR_CYAN="${_ANSI_ESCAPE}[1;36m"
 _ANSI_COLOR_WHITE="${_ANSI_ESCAPE}[1;37m"
 
 _print() {
-	printf "$@"
+	#printf "$@"
+	echo -en "$@"
 }
 _println() {
-	printf "$@"
-	echo
+	#printf "$@"
+	#echo
+	echo -e "$@"
 }
 _print_term() {
 	if [[ $TERM != "dump" ]]; then
-		_print $@
+		_print "$@"
 	fi
 }
 _println_term() {
 	if [[ $TERM != "dump" ]]; then
-		_println $@
+		_println "$@"
 	fi
 }
 
@@ -53,14 +51,14 @@ message() {
 	_print_term $_ANSI_COLOR_GREEN
 	_print "[${SCRIPT_NAME}] "
 	_print_term $_ANSI_RESET
-	_println $@
+	_println "$@"
 }
 message_error() {
 	(
 		_print_term $_ANSI_COLOR_RED
 		_print "[${SCRIPT_NAME}] Error: "
 		_print_term $_ANSI_RESET
-		_println $@
+		_println "$@"
 	) >&2
 }
 message_debug() {
@@ -68,7 +66,7 @@ message_debug() {
 		_print_term $_ANSI_COLOR_YELLOW
 		_print "[${SCRIPT_NAME}] [DEBUG] "
 		_print_term $_ANSI_RESET
-		_println $@
+		_println "$@"
 	) >&2
 }
 

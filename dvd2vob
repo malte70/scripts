@@ -1,4 +1,4 @@
-#!/usr/bin/zsh
+#!/usr/bin/env zsh
 #
 # dvd2vob
 #    Reads out a DVD and dumps the content to a .vob file.

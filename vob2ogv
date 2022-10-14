@@ -1,4 +1,4 @@
-#!/usr/bin/zsh
+#!/usr/bin/env zsh
 #
 # vob2ogv
 #    Converts a DVD dump (.vob) to an Ogg Vorbis/Theora-File.

@@ -1,4 +1,4 @@
-#!/usr/bin/zsh
+#!/usr/bin/env zsh
 #
 # dvd2ogv
 #    Rips a DVD Movie to an Ogg file.
