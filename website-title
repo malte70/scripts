@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# Retrieve a website and extract the title
+# Default to OpenGraph Title, and fall back to <title>.
+#
+
+
+import os
+import sys
+import requests
+from bs4 import BeautifulSoup
+
+
+# fallback url
+fallback_url = 'https://github.com/malte70/scripts'
+
+
+def usage(output=sys.stdout) -> None:
+	argv0 = os.path.basename(sys.argv[0])
+	print(f"Usage: {argv0} <url>", file=output)
+
+
+def get_title(url: str) -> str | None:
+	"""Get a web site's title.
+
+	Uses og:title by default, or the classic <title> tag. Returns None if neither are found.
+
+	Args:
+		url (str): Website URL
+
+	Returns:
+		str | None: The title, or None if no title could be detected.
+	"""
+	# making requests instance
+	reqs = requests.get(url)
+
+	# print("get_title(): Got " + str(len(reqs.text)) + " Bytes...", file=sys.stderr)
+
+	# using the BeautifulSoup module
+	soup = BeautifulSoup(reqs.text, 'html.parser')
+
+	# Try to get <title>
+	# for title in soup.find_all('title'):
+	# 	if len(title) > 1:
+	# 		return title.get_text()
+	title = soup.find("title")
+	if title is not None and len(title.get_text()) > 1:
+		return title.get_text()
+
+	# Try to get og:title meta property
+	title = soup.find("meta", property="og:title")
+	if title is not None and len(title["content"]) > 1:
+		return title["content"]
+
+	# No title found :(
+	return None
+
+
+if __name__ == "__main__":
+	if len(sys.argv) == 1:
+		print("Using fallback URL...")
+		url = fallback_url
+		title = get_title(url)
+		print(f"Website-URL: {url}")
+		print(f"Title:       {title}")
+
+	else:
+		for arg in sys.argv[1:]:
+			if arg == "--help" or arg == "-h":
+				usage()
+
+			elif arg[0] == "-":
+				print(f"Unknown option: {arg}", file=sys.stderr)
+				usage(sys.stderr)
+				sys.exit(1)
+
+			else:
+				url = arg
+				title = get_title(url)
+				# print(f"Website-URL: {url}")
+				# print(f"Title:       {title}")
+				print(title)
+
