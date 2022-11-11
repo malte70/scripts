@@ -9,7 +9,7 @@ _ANSI_ESCAPE=$(printf "\e")
 _ANSI_RESET="${_ANSI_ESCAPE}[0m"
 _ANSI_ATTR_BOLD="${_ANSI_ESCAPE}[1m"
 _ANSI_ATTR_ITALIC="${_ANSI_ESCAPE}[3m"
-_ANSI_ATTR_UNDERLINE="${_ANSI_ESCAPE}4m"
+_ANSI_ATTR_UNDERLINE="${_ANSI_ESCAPE}[4m"
 _ANSI_COLOR_BLACK="${_ANSI_ESCAPE}[0;30m"
 _ANSI_COLOR_RED="${_ANSI_ESCAPE}[0;31m"
 _ANSI_COLOR_GREEN="${_ANSI_ESCAPE}[0;32m"
@@ -61,13 +61,23 @@ message_error() {
 		_println "$@"
 	) >&2
 }
-message_debug() {
+message_info() {
 	(
 		_print_term $_ANSI_COLOR_YELLOW
-		_print "[${SCRIPT_NAME}] [DEBUG] "
+		_print "[${SCRIPT_NAME}] [INFO] "
 		_print_term $_ANSI_RESET
 		_println "$@"
 	) >&2
+}
+message_debug() {
+	if [[ $DEBUG -eq 1 ]]; then
+		(
+			_print_term $_ANSI_COLOR_YELLOW
+			_print "[${SCRIPT_NAME}] [DEBUG] "
+			_print_term $_ANSI_RESET
+			_println "$@"
+		) >&2
+	fi
 }
 
 version() {
@@ -122,5 +132,20 @@ fi
 if [[ "$1" == "--version" || "$1" == "-V" ]]; then
 	version
 	exit 0
+fi
+
+# Change terminal title
+# https://tldp.org/HOWTO/pdf/Xterm-Title.pdf
+if [[ -n $ZSH_NAME ]]
+then
+	set-xterm-title() {
+		print -Pn "\e]0;$1\a"
+	}
+	
+elif [[ -n $BASH_VERSION ]]; then
+	set-xterm-title() {
+		printf "\033]0;%s\007" "$@"
+	}
+	
 fi
 
