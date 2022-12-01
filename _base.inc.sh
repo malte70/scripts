@@ -63,6 +63,7 @@ _ANSI_ATTR_ALTERNATE_BUFFER_DISABLED="${_ANSI_ESCAPE}[?1049l"
 # 
 # Colors (original 16 colors)
 # 
+_ANSI_ATTR_UNDERLINE="${_ANSI_ESCAPE}[4m"
 _ANSI_COLOR_BLACK="${_ANSI_ESCAPE}[0;30m"
 _ANSI_COLOR_RED="${_ANSI_ESCAPE}[0;31m"
 _ANSI_COLOR_GREEN="${_ANSI_ESCAPE}[0;32m"
@@ -132,15 +133,28 @@ message_error() {
 		_println "$@"
 	) >&2
 }
-# A debug notice (on stderr)
-message_debug() {
+# A message with additional information (INFO level, on stderr)
+message_info() {
 	(
 		_print_term $_ANSI_COLOR_YELLOW
-		_print "[${SCRIPT_NAME}] [DEBUG] "
+		_print "[${SCRIPT_NAME}] [INFO] "
 		_print_term $_ANSI_RESET
 		_println "$@"
 	) >&2
 }
+# Detailed information for debugging purpose on stderr,
+# only shown if $DEBUG equals 1
+message_debug() {
+	if [[ $DEBUG -eq 1 ]]; then
+		(
+			_print_term $_ANSI_COLOR_YELLOW
+			_print "[${SCRIPT_NAME}] [DEBUG] "
+			_print_term $_ANSI_RESET
+			_println "$@"
+		) >&2
+	fi
+}
+
 # Support "--version"/"-V" options by default
 # See also the if statement at the end of this file,
 # which checks if one of the options where passed.
@@ -193,6 +207,26 @@ if [[ -z $EDITOR ]]; then
 		message_error "Neither vim, nor vi, nor nano found!"
 		exit 1
 	fi
+fi
+
+
+
+##########################################
+# Change terminal title
+# https://tldp.org/HOWTO/pdf/Xterm-Title.pdf
+# 
+
+if [[ -n $ZSH_NAME ]]
+then
+	set-xterm-title() {
+		print -Pn "\e]0;$1\a"
+	}
+	
+elif [[ -n $BASH_VERSION ]]; then
+	set-xterm-title() {
+		printf "\033]0;%s\007" "$@"
+	}
+	
 fi
 
 

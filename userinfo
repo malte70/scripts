@@ -17,10 +17,6 @@ SCRIPT_VERSION="0.20220226"
 
 source $(dirname $0)/_base.inc.sh
 
-# Override message_debug()
-functions[message_debug]="if [[ \$DEBUG -eq 1 ]]; then
-	$functions[message_debug]
-fi"
 
 
 # 
@@ -76,7 +72,6 @@ while [[ $# -gt 0 ]]; do
 		exit 1
 		
 	else
-		#message_debug "User given: $1"
 		CFG_USERS+=$1
 		
 	fi
@@ -89,7 +84,7 @@ done
 # No user names given - fall back to $USER
 # 
 if [[ ${#CFG_USERS[@]} -eq 0 ]]; then
-	message_debug "No username given as an argument - falling back to \$USER"
+	message_info "No username given as an argument - falling back to \$USER"
 	CFG_USERS+=$USER
 	
 fi
