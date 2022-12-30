@@ -67,7 +67,7 @@ get_root_folder_name() {
 if ! git rev-parse --git-dir &>/dev/null; then
 	UPSTREAM="no git"
 else
-	if [[ -f $CACHEFILE && $DO_IGNORE_CACHE == "no" && $(python2 -c 'import os.path,time;print "yes" if (time.time()-os.path.getmtime("'"$CACHEFILE"'"))/(60*60*24) > 2.0 else "no"') == "no" ]]; then
+	if [[ -f $CACHEFILE && $DO_IGNORE_CACHE == "no" && $(python3 -c 'import os.path,time;print("yes" if (time.time()-os.path.getmtime("'"$CACHEFILE"'"))/(60*60*24) > 2.0 else "no")') == "no" ]]; then
 		UPSTREAM=`cat $CACHEFILE`
 	else
 		REMOTE=`git config --get remote.origin.url`
