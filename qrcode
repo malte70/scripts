@@ -1,33 +1,36 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
-#
-# QRCode generator
-#    Generates a QR code as an PNG or JPEG image.
-#
-# Copyright (c) 2013 Malte Bublitz.
-# All rights reserved.
-#
-# Licensed under the terms of the 2-clause BSD license.
-# See LICENSE for details.
-#
+#!/usr/bin/env python3
 
+"""Minimal QRCode generator.
+
+Generates a QR code as an PNG or JPEG image.
+
+"""
+
+import os
 import sys
-try:
-	import qrcode
-except ImportError:
-	print "Please install python-qrcode."
-	print "Get it at https://github.com/lincolnloop/python-qrcode"
-	sys.exit(1)
+
+import qrcode
+
+
+class AppInfo:
+	Name = "qrcode"
+	Version = "0.2"
+
 
 def main():
-	if len(sys.argv)!=3:
-		print "Usage: qrcode <Filename> <Text>"
+	if len(sys.argv) != 3:
+		print("Usage: qrcode <Filename> <Text>")
 		sys.exit(1)
 
 	filename = sys.argv[1]
 	text     = sys.argv[2]
 
+	if os.path.exists(filename):
+		print(f"[{AppInfo.Name}] Error: File \"{filename}\" already exists!", file=sys.stderr)
+		sys.exit(2)
+
 	qrcode.make(text).save(filename)
+
 
 if __name__=="__main__":
 	main()
