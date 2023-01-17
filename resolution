@@ -6,71 +6,84 @@
 # is hardcoded...
 # 
 
+SCRIPT_NAME="$(basename $0)"
+SCRIPT_VERSION="0.20220228"
+
+source $(dirname $0)/_base.inc.sh
+
+SCREENLAYOUTS_LOCATION="$HOME/.screenlayout"
+
+usage(){
+	echo "Usage:"
+	echo "\t$SCRIPT_NAME [resolution|options]"
+	echo
+	echo "OPTIONS"
+	echo "\t--list,    -l   List available resolutions"
+	echo "\t--help,    -h   Display this help text"
+	echo "\t--version, -V   Show version of resolution"
+	echo
+	echo "\tIf no resolution is given, you get a nice fancy dialog with"
+	echo "\ta list of resolutions to choose from."
+	echo
+	echo "SCREENLAYOUTS"
+	echo "\tA screen layout is just an shell script in ~/.screenlayout"
+	echo "\twhich calls xrandr. Arandr[1] exports screen layouts like this,"
+	echo "\tand allows arranging multiple screens via mouse."
+	echo 
+}
+
+if [[ -z $DISPLAY ]]; then
+	message_error "\$DISPLAY not set!"
+	exit 2
+fi
+
 if [[ $# -eq 0 ]]; then
-	res=$(zenity --list \
-		--title "Bildschirmlayout" \
-		--column "Name" --column "Beschreibung" \
-		"eDP1"       "Nur interner Bildschirm" \
-		"eDP1+HDMI"  "Interner Bildschirm neben HDMI (beide Full HD)" \
-		"eDP1=HDMI"  "Bildschirm spiegeln" \
-		"HDMI-720p"  "HDMI 720p/HD Ready" \
-		"HDMI-HD"    "HDMI 1080p/HD" \
-		"HDMI-4K"    "HDMI 2160p/4K")
+	res=$(find $SCREENLAYOUTS_LOCATION -type f -executable -exec basename '{}' \; \
+		| sort \
+		| sed 's|\.sh$||' \
+		| zenity --list \
+			--title  "Screen Layout" \
+			--column "Name" \
+			--width  350 \
+			--height 350 \
+			--text   "Please choose a screen layout from the list:")
+	if [[ $? -eq 1 ]]; then
+		# User clicked on abort
+		message_debug "The user clicked [Abort] on the zenity dialog. Doing nothing."
+		exit 0
+	fi
+	
+elif [[ $1 == "-l" || $1 == "--list" ]]; then
+	#echo "Available layouts:"
+	message "Available layouts:"
+	find $SCREENLAYOUTS_LOCATION -type f -executable -exec basename '{}' \; \
+		| sort \
+		| sed 's|\.sh$||'
+	exit 0
+	
+elif [[ $1 == "-h" || $1 == "--help" ]]; then
+	usage
+	exit 0
+	
+elif [[ ${1:0:1} == "-" ]]; then
+	message_error "Invalid option: $1"
+	usage >&2
+	exit 1
 	
 else
 	res=$1
+	
 fi
 
-case $res in
-	"eDP1")
-		xrandr \
-			--output eDP1     --primary --mode 1920x1080 --pos 0x0 --rotate normal \
-			--output DP1      --off \
-			--output HDMI1    --off \
-			--output HDMI2    --off \
-			--output VIRTUAL1 --off
-		;;
-	"eDP1+HDMI")
-		xrandr \
-			--output eDP1     --primary --mode 1920x1080 --pos 0x0    --rotate normal \
-			--output HDMI1              --mode 1920x1080 --pos 1920x0 --rotate normal \
-			--output HDMI2    --off \
-			--output DP1      --off \
-			--output VIRTUAL1 --off
-		;;
-	"eDP1=HDMI")
-		xrandr \
-			--output eDP1     --primary --mode 1920x1080 --pos 0x0 --rotate normal \
-			--output HDMI1              --mode 1920x1080 --pos 0x0 --rotate normal \
-			--output HDMI2    --off \
-			--output DP1      --off \
-			--output VIRTUAL1 --off
-		;;
-	"HDMI-720p")
-		xrandr \
-			--output eDP1     --off \
-			--output HDMI1    --primary --mode 1280x720 --pos 0x0 --rotate normal \
-			--output HDMI2    --off \
-			--output DP1      --off \
-			--output VIRTUAL1 --off
-		;;
-	"HDMI-HD")
-		xrandr \
-			--output eDP1     --off \
-			--output HDMI1    --primary --mode 1920x1080 --pos 0x0 --rotate normal \
-			--output HDMI2    --off \
-			--output DP1      --off \
-			--output VIRTUAL1 --off
-		;;
-	"HDMI-4K")
-		xrandr \
-			--output eDP1     --off \
-			--output HDMI1    --primary --mode 3840x2160 --pos 0x0 --rotate normal \
-			--output HDMI2    --off \
-			--output DP1      --off \
-			--output VIRTUAL1 --off
-		;;
-	*)
-		echo "Unknown resolution: $res"
-		;;
-esac
+message_debug "res=\"$res\""
+
+if [[ -x "$SCREENLAYOUTS_LOCATION/$res.sh" ]]; then
+	env "$SCREENLAYOUTS_LOCATION/$res.sh"
+	
+else
+	# Invalid screen layout
+	message_error "Invalid layout \"$res\": File not found or nmissing executable bit"
+	exit 2
+	
+fi
+
