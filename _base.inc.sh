@@ -1,10 +1,14 @@
+# vim: set ft=bash:
 # 
 # _base.inc.sh
 #    Part of: malte70's Shell scripts <https://github.com/malte70/scripts>
 # 
 # Basic features for my shell scripts
 # 
-
+# Usage:
+#     - Set $SCRIPT_NAME and $SCRIPT_VERSION
+#     - `source` this file
+# 
 
 
 ##########################################

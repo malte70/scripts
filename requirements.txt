@@ -1,0 +1,24 @@
+# 
+# requirements.txt
+# 
+# Install using:
+# 	pip install -r requirements.txt
+# 
+
+# battery_status
+OSDetect
+
+# minidnsserver
+dnspython
+
+# qrcode
+qrcode
+
+# website-screenshot
+PyVirtualDisplay
+selenium
+
+# website-title
+beautifulsoup4
+requests
+
