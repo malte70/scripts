@@ -5,24 +5,36 @@
 # 
 # System update function
 # 
-# Copyright (c) 2015 Malte Bublitz, http://malte-bublitz.de
-# All rights reserved.
-# 
 
 SCRIPT_NAME="$(basename $0)"
-SCRIPT_VERSION="0.20151104"
+SCRIPT_VERSION="0.20230118"
 
 source $(dirname $0)/_base.inc.sh
 
-usage() {
+#APP_ACTION_FILLER="."
+APP_ACTION_FILLER=" "
+APP_ACTION_LENGTH=21
+
+
+
+
+
+########################################################################
+# Usage help / parse command line options
+# 
+function usage {
 	echo "Usage:"
 	echo "  $SCRIPT_NAME"
 	echo "  $SCRIPT_NAME <options>"
 	echo
 	echo "Update the system:"
-	echo " -> dotfiles"
-	echo " -> scripts"
-	echo " -> Installed packages"
+	echo "  → Git: dotfiles/scripts"
+	echo "  → pass(1) Git repo"
+	echo "  → Installed packages"
+	echo "     → ArchLinux: pacman + AUR"
+	echo "     → Ubuntu/Debian: APT"
+	echo "     → macOS: Homebrew"
+	echo "  → "
 	echo
 	echo "Options:"
 	echo "  --version -V  Show the version and exit"
@@ -31,83 +43,305 @@ usage() {
 	echo
 }
 
-if [[ "$1" == "--help" || "$1" == "-h" ]]; then
-	version
-	usage
-	exit 0
-elif [[ "$1" == "--version" || "$1" == "-v" ]]; then
-	version
-	exit 0
-fi
-
 DO_DRY_RUN="false"
-if [[ "$1" == "--dry-run" || "$1" == "-d" ]]; then
-	DO_DRY_RUN="true"
-fi
+while [[ $# -gt 0 ]]; do
+	if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+		version
+		echo
+		usage
+		exit 0
 
-message() {
+	elif [[ "$1" == "--version" || "$1" == "-V" ]]; then
+		version
+		exit 0
+
+	elif [[ "$1" == "--dry-run" || "$1" == "-d" ]]; then
+		DO_DRY_RUN="true"
+
+	elif [[ "${1:0:1}" == "-" ]]; then
+		message_error "Unknown option: \"$1\""
+
+	else
+
+	fi
+	shift
+
+done
+
+
+
+
+
+########################################################################
+# Utility functions
+# 
+# Usage:
+#     message_status "$(message_spaces_fill "<Action>" <ActionMaxLength>)" <message ...>
+
+# Usage: message_spaces_fill <message> <max_lenth>
+function message_spaces_fill {
+	#python ~malte70/code/rahmenwerk.py/rahmenwerk/term.py "text_fill_spaces" "$1" "$2" "."
+	#	env msg_text="$1" msg_max_length="$2" msg_space=" " python -c 'import os,sys
+	#msg_text=os.environ.get("msg_text",sys.argv[0]);msg_max_length=os.environ.get("msg_max_length");msg_space=os.environ.get("msg_space"," ")
+	#print(msg_text + (msg_max_length - min(len(msg_text),msg_max_length)))'
+	python -c '# python -c […] "<msg_text>" <msg_max_length> "<msg_space>"
+def text_fill_spaces(msg_text: str, msg_max_length: int = 0, msg_space: str = " ") -> str:
+        msg_space_count = msg_max_length - min(len(msg_text), msg_max_length)
+        return msg_text + (msg_space_count*msg_space)
+import sys
+print(text_fill_spaces(sys.argv[1], int(sys.argv[2]), sys.argv[3]))' "$1" "$2" "$3"
+}
+
+# Usage: message_status <AppAction> <message ...>
+function message_status {
+	if [ -t 1 ]; then
+		#echo "${_ANSI_COLOR_CYAN}::${_ANSI_COLOR_LIGHT_BLUE} $1 ${_ANSI_COLOR_CYAN}::${_ANSI_COLOR_WHITE} $2 ${_ANSI_RESET}"
+		_print_term "${_ANSI_COLOR_CYAN}"
+		_print ":: "
+		_print_term "${_ANSI_COLOR_LIGHT_BLUE}"
+		_print "$1 "
+		shift
+		_print_term "${_ANSI_COLOR_CYAN}"
+		_print ":: "
+		_print_term "${_ANSI_COLOR_WHITE}"
+		_print "$@"
+		_print_term "${_ANSI_RESET}"
+		_println ""
+	else
+		echo "[$1]" "$@"
+	fi
+}
+
+function message2 {
 	echo "${_ANSI_COLOR_DARK_CYAN}==[${_ANSI_COLOR_LIGHT_GREEN} $@ ${_ANSI_COLOR_DARK_CYAN}]==${_ANSI_RESET}"
 }
 
 
-##################################################
-# dotfiles repository
-#
 
 
-message "git pull malte70/dotfiles @ \$HOME"
 
-cd $HOME
-
-if [[ $DO_DRY_RUN == "true" ]]; then
-	git fetch
-else
-	git pull
-	git submodule init >/dev/null
-	git submodule sync >/dev/null
-	git submodule update >/dev/null
-fi
+########################################################################
+# Sync Git repositories
+# 
 
 ##################################################
-# scripts repository
-#
+# dotfiles (~/)
+# 
+if [[ -d "$HOME/.git" ]]; then
+	set-xterm-title "[update] git: ~"
+	message_status "$(message_spaces_fill 'git: malte70/dotfiles' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "pull / push / submodule update"
 
-if [[ -d $HOME/scripts ]]; then
-	message "pushd <- \$HOME/scripts"
-	pushd $HOME/scripts >/dev/null
-else
-	message "pushd <- \$HOME/bin"
-	pushd $HOME/bin >/dev/null
-fi
-
-message "git pull @ malte70/scripts"
-git pull
-
-##################################################
-# Upgrade packages
-#
-
-if [[ $OS == "GNU/Linux" ]]; then
-	if [[ $OSVARIANT == "Arch" ]]; then
-		message "$OSVARIANT :: Upgrade"
-		yaourt -Syu --aur
-		message "$OSVARIANT :: Cleanup"
-		yaourt -Qqdt &>/dev/null && yaourt -R $(y -Qqdt)
-		
-	elif [[ $OSVARIANT == "Debian" || $OSVARIANT == "Ubuntu" ]]; then
-		message "$OSVARIANT :: Update"
-		sudo apt-get update
-		message "$OSVARIANT :: Upgrade"
-		sudo apt-get upgrade
-		message "$OSVARIANT :: Dist-Upgrade"
-		sudo apt-get dist-upgrade
-		message "$OSVARIANT :: Cleanup"
-		sudo apt-get autoremove
+	pushd "$HOME" >/dev/null
+	if [[ $DO_DRY_RUN == "true" ]]; then
+		message2 "Dry-run: git fetch"
+		git fetch
+	else
+		git pull
+		git submodule init >/dev/null
+		git submodule sync >/dev/null
+		git submodule update >/dev/null
+		git push
 	fi
-elif [[ $OS == "Mac OS X" ]]; then
-	message "$OS :: Homebrew :: Update"
-	brew update
-	message "$OS :: Homebrew :: Upgrade"
-	brew upgrade --all
+	popd
+	echo
 fi
 
+
+##################################################
+# scripts (~/bin)
+# 
+if [[ -d "$HOME/bin/.git" ]]; then
+	set-xterm-title "[update] git: ~/bin"
+	message_status "$(message_spaces_fill 'git:malte70/scripts' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "pull / push"
+	pushd $HOME/bin >/dev/null
+	if [[ $DO_DRY_RUN == "true" ]]; then
+		message2 "Dry-run: git fetch"
+		git fetch
+	else
+		git pull
+		git push
+	fi
+	popd
+	echo
+fi
+
+
+##################################################
+# pass (~/.password-store, via “pass git”)
+# 
+if which pass &>/dev/null; then
+	set-xterm-title "[update] pass"
+	message_status "$(message_spaces_fill 'pass' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "sync"
+	if [[ $DO_DRY_RUN == "true" ]]; then
+		message2 "Dry-run: Skipped."
+
+	else
+		pass git pull
+		pass git push
+
+	fi
+	echo
+fi
+
+
+
+
+
+########################################################################
+# Package managers
+# 
+
+##########################################
+# Arch Linux: pacman/AUR
+# 
+if [[ $OSVARIANT == "Arch" ]]; then
+	set-xterm-title "[update] pacman upgrade"
+
+	message_status "$(message_spaces_fill 'ArchLinux' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "pacman -Syuw --noconfirm"
+	sudo pacman -Syuw --noconfirm
+
+	if [[ $DO_DRY_RUN == "true" ]]; then
+		message2 "Dry-run: Only downloading upgrades"
+
+	else
+		message_status "$(message_spaces_fill 'ArchLinux' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "pacman -Su"
+		sudo pacman -Su
+		echo
+
+		# AUR Upgrade
+		message_status "$(message_spaces_fill 'ArchLinux' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "trizen -Sua"
+		trizen -Sua
+		echo
+		
+		# Clean up unneccessary (left over) packages
+		message_status "$(message_spaces_fill 'ArchLinux' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "pacman -Rcs \$(pacman -Qqdtt)"
+		pacman -Qqdt &>/dev/null \
+			&& sudo pacman -Rcs $(pacman -Qqdt)
+
+	fi
+	echo
+fi
+
+
+##########################################
+# Debian/Ubuntu: APT
+# 
+if [[ $OSVARIANT == "Debian" || $OSVARIANT == "Ubuntu" ]]; then
+	set-xterm-title "[update] APT upgrade"
+
+	message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Update"
+	sudo apt-get update
+
+	if [[ $DO_DRY_RUN == "true" ]]; then
+		message2 "Dry-run: Only downloading upgrades"
+		sudo apt-get upgrade -y -d
+		sudo apt-get dist-upgrade -y -d
+
+	else
+		message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Upgrade"
+		sudo apt-get upgrade
+		echo
+
+		message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Dist-Upgrade"
+		sudo apt-get dist-upgrade
+		echo
+
+		message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Cleanup"
+		sudo apt-get autoremove
+		
+	fi
+	echo
+fi
+
+
+##################################################
+# Flatpak
+#
+if which flatpak &>/dev/null; then
+	if [[ $DO_DRY_RUN == "true" ]]; then
+
+		set-xterm-title "[update] Flatpak (System)"
+		#message_status"$(message_spaces_fill "Flatpak (User)" 15)" "Updating Flatpak (System) packages"
+		message_status "$(message_spaces_fill 'Flatpak' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Updating Flatpak (System) packages"
+		message2 "Dry-run: Skipping package deployment"
+		flatpak update --no-deploy --no-deps --noninteractive --system
+		echo
+
+		set-xterm-title "[update] Flatpak (User)"
+		#m_essage_status "$(message_spaces_fill "Flatpak User" 15)" "Updating Flatpak (User) packages"
+		message_status "$(message_spaces_fill 'Flatpak' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Updating Flatpak (User) packages"
+		message2 "Dry-run: Skipping package deployment"
+		flatpak update --no-deploy --no-deps --noninteractive --user
+
+	else
+		set-xterm-title "[update] Flatpak (System)"
+		message_status "$(message_spaces_fill 'Flatpak' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Updating Flatpak (System) packages"
+		flatpak update --system
+		echo
+
+		set-xterm-title "[update] Flatpak (User)"
+		message_status "$(message_spaces_fill 'Flatpak' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Updating Flatpak (User) packages"
+		flatpak update --user
+
+	fi
+	echo
+fi
+
+
+##################################################
+# macOS: Homebrew/mas
+# 
+if [[ $OS == "Mac OS X" ]]; then
+	set-xterm-title "[update] Homebrew upgrade"
+
+	message_status "$(message_spaces_fill 'macOS :: Homebrew' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Update"
+	brew update
+	echo
+
+	if [[ $DO_DRY_RUN == "true" ]]; then
+		message_status "$(message_spaces_fill 'macOS :: Homebrew' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Upgrade"
+		message2 "$OSVARIANT :: Passing option \"--dry-run\" to brew"
+		brew upgrade --dry-run
+
+	else
+		message_status "$(message_spaces_fill 'macOS :: Homebrew' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Upgrade"
+		brew upgrade --all
+		echo
+
+		message_status "$(message_spaces_fill 'macOS :: Homebrew' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Cleanup"
+		brew autoremove
+		brew cleanup
+		brew doctor
+
+		# App Store
+		if which mas &>/dev/null; then
+			echo
+			set-xterm-title "[update] App Store update"
+			message_status "$(message_spaces_fill 'macOS' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "App Store update via mas"
+			mas upgrade
+		fi
+	fi
+	echo
+fi
+
+
+
+
+
+########################################################################
+# tldr
+# 
+if which tldr &>/dev/null; then
+	set-xterm-title "[update] tldr"
+	message_status "$(message_spaces_fill 'tldr' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "update"
+	if [[ $DO_DRY_RUN == "true" ]]; then
+		message2 "Dry-run: Skipped."
+	else
+		tldr --update
+	fi
+	echo
+fi
+
+
+
+set-xterm-title ""

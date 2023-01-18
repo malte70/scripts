@@ -11,8 +11,12 @@ OSDetect
 # minidnsserver
 dnspython
 
+# pushover-notify
+pushover @ git+https://github.com/Wyattjoh/pushover@5852545c5b9cf2717e1eafc4c8b134a08b0994da
+toml==0.10.2
+
 # qrcode
-qrcode
+qrcode[pil]
 
 # website-screenshot
 PyVirtualDisplay

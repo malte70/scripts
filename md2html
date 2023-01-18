@@ -5,12 +5,9 @@
 #
 # Markdown to HTML converter powered by pandoc
 #
-# Copyright (c) 2015 Malte Bublitz, http://malte-bublitz.de
-# All rights reserved.
-# 
 
 SCRIPT_NAME="$(basename $0)"
-SCRIPT_VERSION="0.20151103"
+SCRIPT_VERSION="0.20230118"
 
 source $(dirname $0)/_base.inc.sh
 
@@ -50,17 +47,20 @@ _md2html() {
 	markdown="$1"
 	markdown_filename=$(basename "${markdown}")
 	html="$2"
-	pandoc --from markdown_github --to html5 --standalone "$markdown" --output "$html"
+	title=$(grep '^# ' "$markdown" | head -n1 | cut -c3-)
+	[[ -z $title ]] && title="${markdown_filename}"
 	
-	sed -i "s/title>/title>${markdown_filename}/" "$2"
-	ADDITIONAL_STYLES="body{font: 18px 'Source Serif Pro';margin-left: 4em}"
-	ADDITIONAL_STYLES="${ADDITIONAL_STYLES}body>*{margin-bottom:1em;margin-top:0.8em;}"
-	ADDITIONAL_STYLES="${ADDITIONAL_STYLES}pre{background:#ddd;border:1px solid #aaa;padding:1em;}"
-	ADDITIONAL_STYLES="${ADDITIONAL_STYLES}h1:before,h2:before{display:inline-block;width:3em;text-align:right;margin-left:-3.5em;padding-right:.5em;}"
-	ADDITIONAL_STYLES="${ADDITIONAL_STYLES}h1:before{content:\"# \";}h2:before{content:\"## \";}"
-	ADDITIONAL_STYLES="${ADDITIONAL_STYLES}a:link,a:visited{color:#111;}"
+	pandoc \
+		--from gfm \
+		--to html5 \
+		--standalone \
+		--metadata title="$title" \
+		--include-in-header ~/.local/share/pandoc/templates/html5-style.inc.html \
+		"$markdown" \
+		--output "$html"
 	
-	sed -i "s/pre;}/pre;}$ADDITIONAL_STYLES/" "$2"
+	# Table borders and cellpadding, the dirty way
+	sed -i 's|<table>|<table border="1" cellpadding="6">|g' "$html"
 }
 
 markdown="$1"
@@ -78,3 +78,4 @@ if [[ $VERBOSE -eq 1 ]]; then
 fi
 
 _md2html "$markdown" "$html"
+
