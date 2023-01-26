@@ -7,9 +7,10 @@
 # 
 
 SCRIPT_NAME="$(basename $0)"
-SCRIPT_VERSION="0.20230118"
+SCRIPT_VERSION="0.20230126"
 
 source $(dirname $0)/_base.inc.sh
+
 
 #APP_ACTION_FILLER="."
 APP_ACTION_FILLER=" "
@@ -33,8 +34,10 @@ function usage {
 	echo "  → Installed packages"
 	echo "     → ArchLinux: pacman + AUR"
 	echo "     → Ubuntu/Debian: APT"
-	echo "     → macOS: Homebrew"
+	echo "     → macOS: Homebrew, MacPorts and App Store[1]"
 	echo "  → "
+	echo
+	echo "[1]: Requires <https://github.com/mas-cli/mas> (available via Homebrew)"
 	echo
 	echo "Options:"
 	echo "  --version -V  Show the version and exit"
@@ -299,21 +302,56 @@ if [[ $OS == "Mac OS X" ]]; then
 	echo
 
 	if [[ $DO_DRY_RUN == "true" ]]; then
+		# 
+		# Homebrew
+		# 
 		message_status "$(message_spaces_fill 'macOS :: Homebrew' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Upgrade"
-		message2 "$OSVARIANT :: Passing option \"--dry-run\" to brew"
+		message2 "Dry-run: Passing option \"--dry-run\" to brew"
 		brew upgrade --dry-run
+
+		# 
+		# MacPorts
+		# 
+		if which port &>/dev/null; then
+			echo
+			set-xterm-title "[update] MacPorts upgrade"
+			message_status "$(message_spaces_fill 'macOS :: MacPorts' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Self-Update"
+			sudo port selfupdate
+			
+			echo
+			message_status "$(message_spaces_fill 'macOS :: MacPorts' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Upgrade outdated"
+			message2 "Dry-run: Passing option \"-y\" to brew"
+			sudo port -y upgrade outdated
+		fi
 
 	else
 		message_status "$(message_spaces_fill 'macOS :: Homebrew' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Upgrade"
-		brew upgrade --all
+		brew upgrade
 		echo
 
 		message_status "$(message_spaces_fill 'macOS :: Homebrew' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Cleanup"
 		brew autoremove
-		brew cleanup
+		# brew cleanup
+		brew cleanup --prune=7
 		brew doctor
 
+		# 
+		# MacPorts
+		# 
+		if which port &>/dev/null; then
+			echo
+			set-xterm-title "[update] MacPorts upgrade"
+			message_status "$(message_spaces_fill 'macOS :: MacPorts' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Self-Update"
+			sudo port selfupdate
+			
+			echo
+			message_status "$(message_spaces_fill 'macOS :: MacPorts' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Upgrade outdated"
+			sudo port upgrade outdated
+		fi
+		
+		# 
 		# App Store
+		# 
 		if which mas &>/dev/null; then
 			echo
 			set-xterm-title "[update] App Store update"
