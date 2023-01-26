@@ -229,7 +229,7 @@ fi
 ##########################################
 # Debian/Ubuntu: APT
 # 
-if [[ $OSVARIANT == "Debian" || $OSVARIANT == "Ubuntu" ]]; then
+if [[ $OSVARIANT == "Debian" || $OSVARIANT == "Raspbian" || $OSVARIANT == "Ubuntu" ]]; then
 	set-xterm-title "[update] APT upgrade"
 
 	message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Update"
