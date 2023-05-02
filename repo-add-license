@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+# 
+# Add a LICENSE file to a software repository.
+# 
+# Supported SPDX License Identifiers:
+#  - MIT
+#  - BSD-2-Clause
+# 
+# Downloads a template file from <https://f.malte70.de/>, and inserts
+# the current year as well as your name into it (using placeholders).
+# 
+
+
+
+SCRIPT_NAME="$(basename $0)"
+SCRIPT_VERSION="0.20230502"
+
+source $(dirname $0)/_base.inc.sh
+
+
+
+# 
+# Supported SPDX IDs
+# 
+LICENSE_IDS_SUPPORTED=("MIT" "BSD-2-Clause")
+
+
+
+# 
+# Usage help
+# 
+usage() {
+	echo "Usage:"
+	echo "\t$SCRIPT_NAME [--help|--version]"
+	echo "\t$SCRIPT_NAME [<spdx-license-id>]"
+	echo
+	echo "Currently supported license IDs:"
+	echo "\tMIT"
+	echo "\tBSD-2-Clause"
+	echo "\t(or none to use the default license)"
+	echo
+	echo "$0 places a LICENSE file in the current directory; it's generated from a template,"
+	echo "with usable default values for the placeholders \"[year]\" and \"[fullname]\"."
+	echo
+	echo "The template files are always downloaded from <https://f.malte70.de/>, with this naming convention:"
+	echo -e "\tLICENSE.tpl *"
+	echo -e "\tLICENSE.${_ANSI_ATTR_ITALIC}<spdx-license-id>${_ANSI_ATTR_ITALIC_RESET}.tpl"
+	echo
+	echo "If no license ID was specified at the command line, a default template (*) is used;"
+	echo "which is just a symlink on the webserver."
+	echo
+}
+
+
+
+# 
+# Parse command line arguments
+# 
+LICENSE_ID=""
+while [[ $# -gt 0 ]]; do
+	if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+		version
+		usage
+		exit 0
+		
+	elif [[ "$1" == "--version" || "$1" == "-V" ]]; then
+		version
+		exit 0
+		
+	elif [[ "${1:0:1}" == "-" && $CFG_DASHDASH -ne 1 ]]; then
+		message_error "Unknown argument: $1"
+		exit 1
+		
+	else
+		LICENSE_ID="$1"
+		
+	fi
+	
+	shift
+	
+done
+
+
+
+# 
+# Get template URL
+# 
+[[ -n "$LICENSE_ID" ]] \
+	&& LICENSE_ID=".${LICENSE_ID}"
+LICENSE_TEMPLATE="https://f.malte70.de/LICENSE$LICENSE_ID.tpl"
+
+
+
+# 
+# Don't overwrite existing files
+# 
+if [[ -f "LICENSE" ]]; then
+	message_error "File already exists: LICENSE"
+	exit 2
+	
+fi
+
+
+
+# 
+# Get the current year and the user's real name,
+# to replace the placeholders
+# 
+_year="$(date +%Y)"
+_fullname="$(getent passwd $USER | cut -d: -f5)"
+[[ -z "$_fullname" ]] && _fullname="$USER"
+
+
+
+# 
+# Download, replace placeholders and save to LICENSE on-the-fly
+# 
+curl -s -o- \
+	"${LICENSE_TEMPLATE}" \
+	| sed "s/\[year\]/$_year/g" \
+	| sed "s/\[fullname\]/$_fullname/g" \
+	> LICENSE
+
+
+
