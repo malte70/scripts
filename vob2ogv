@@ -3,8 +3,6 @@
 # vob2ogv
 #    Converts a DVD dump (.vob) to an Ogg Vorbis/Theora-File.
 #
-# Copyright (c) 2013 Malte Bublitz.
-#
 
 usage() {
 	echo "Usage: $0 input.vob output.ogv"

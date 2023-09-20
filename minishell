@@ -5,12 +5,6 @@
 #    Use whenever a user should be able to launch a shell,
 #    but not to execute commands.
 #
-# Copyright (c) 2013-2015 Malte Bublitz.
-# All rights reserved.
-# 
-# Licensed under the terms of the 2-clause BSD license.
-# See LICENSE for details.
-# 
 
 # Backwards compatibility with Python 2
 try:
