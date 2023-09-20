@@ -1,0 +1,51 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import sys
+import os
+import PyQt5.QtCore
+import PyQt5.QtGui
+import PyQt5.QtWidgets
+import PyQt5.QtWebEngineWidgets
+
+
+class AppInfo(object):
+	Name        = "FreshRSS"
+	Version     = "0.20230920"
+	Description = "Qt Webkit Wrapper for my FreshRSS instance"
+	WebViewURL  = "https://freshrss.rt3x.de/"
+
+
+class FreshRSSMainWindow(PyQt5.QtWidgets.QMainWindow):
+	def __init__(self):
+		super().__init__()
+		self.title  = AppInfo.Name
+		self.left   = 10
+		self.top    = 10
+		self.width  = 800
+		self.height = 600
+		self.initUI()
+
+	def initUI(self):
+		self.setWindowTitle(self.title)
+		self.setGeometry(self.left, self.top, self.width, self.height)
+
+		self.webview = PyQt5.QtWebEngineWidgets.QWebEngineView()
+		self.webview.load(
+			PyQt5.QtCore.QUrl(AppInfo.WebViewURL)
+		)
+
+		self.setCentralWidget(self.webview)
+
+		self.showMaximized()
+
+
+def main():
+	app = PyQt5.QtWidgets.QApplication(sys.argv)
+
+	main_window = FreshRSSMainWindow()
+	app.exec()
+
+
+if __name__ == "__main__":
+	main()
