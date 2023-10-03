@@ -1,0 +1,265 @@
+#!/usr/bin/env zsh
+# 
+# slideshow-generator
+# 
+# Generate a MP4 video from all passed images
+#
+# @see https://www.bogotobogo.com/FFMpeg/ffmpeg_basic_slide_show_from_images_jpeg.php
+# 
+
+
+
+SCRIPT_NAME="$(basename $0)"
+SCRIPT_VERSION="0.1"
+
+source $(dirname $0)/_base.inc.sh
+
+
+
+
+
+########################################################################
+# Usage help
+# 
+
+function usage {
+	echo "Usage:"
+	echo "	$SCRIPT_NAME [OPTIONS] [video.mp4] [images...]"
+	echo
+	echo "Options:"
+	echo "	--version, -V  Display script name and version"
+	echo "	--help,    -h  Show this usage help"
+	echo "	--debug        Turn on debug mode (more verbose messages)"
+	echo "	--dry-run, -h  Don't actually gegrate anything, just show what *WOULD*"
+	echo "	               be done."
+	#echo "	"
+	echo
+}
+
+
+
+
+
+########################################################################
+# Global defaults
+# 
+
+# How much seconds each image is shown
+IMAGE_DURATION=5
+
+# Template used by mktemp(1) to create a temporary directory
+MKTEMP_TEMPLATE="${SCRIPT_NAME}_${USER}_XXXX"
+
+# Video format details passed to ffmpeg
+VIDEO_RESOLUTION="1280x720"   # resolution
+VIDEO_BACKGROUND="black"      # default background color (visible if the image doesn't fit into $VIDEO_RESOLUTION
+VIDEO_CODEC="libx264"         # codec used to encode the video
+VIDEO_FPS=30                  # Frames per second
+VIDEO_PIXEL_FORMAT="yuv420p"  # passed to ffmpeg's -pix_fmt option
+
+# Create a temporary directory using mktemp(1)
+SLIDESHOW_TMPDIR=$(mktemp -d -t "${MKTEMP_TEMPLATE}")
+
+# Behaviour changable by command line options
+DEBUG=0          # Debug mode. Enabled by "--debug"
+DRY_RUN=0        # Don't generate anything with "--dry-run"|"-n"
+IMAGES=()        # Declare an empty array $IMAGES
+
+# Remove $SLIDESHOW_TMPDIR on exit
+#set -o localtraps
+function TRAPINT {
+	#echo "\n${_ANSI_ATTR_ITALIC}SIGINT recieved.${_ANSI_ATTR_ITALIC_RESET}" >&2
+	echo
+	
+	message_info "SIGINT received. Removing temporary directory \"$SLIDESHOW_TMPDIR\" ..."
+	
+	rm -rf "${SLIDESHOW_TMPDIR}" >&2
+	
+	# Reset text effects and cursor state
+	tput sgr0
+	tput cnorm
+	
+	# Exit with status 1
+	#exit 1
+	
+	exit
+}
+#function TRAPTERM {
+#	echo "\n${_ANSI_ATTR_ITALIC}SIGINT recieved.${_ANSI_ATTR_ITALIC_RESET}" >&2
+#	#rm -rvf "${SLIDESHOW_TMPDIR}" >&2
+#	
+#	# Reset text effects and cursor state
+#	tput sgr0
+#	tput cnorm
+#}
+##function TRAPQUIT {
+#function TRAPEXIT {
+#	echo "\n${_ANSI_ATTR_ITALIC}TRAPEXIT() called.${_ANSI_ATTR_ITALIC_RESET}" >&2
+#	
+#	message_debug "Removing \"$SLIDESHOW_TMPDIR\" ..."
+#	#rm -rf "${SLIDESHOW_TMPDIR}"
+#	
+#	# Reset text effects and cursor state
+#	tput sgr0
+#	tput cnorm
+#}
+
+
+
+
+
+########################################################################
+# Parse command line arguments
+# 
+
+# Process all given command line arguments
+while [[ $# -gt 0 ]]; do
+	if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+		# Run usage() to display a help text and immediately exit
+		usage
+		exit 0
+		
+	elif [[ "$1" == "--version" || "$1" == "-V" ]]; then
+		# Like "--help", immediately display information and exit
+		version
+		exit 0
+		
+	elif [[ "$1" == "--debug" ]]; then
+		# Enable debug mode: message_debug() actually displays a message.
+		# → message_debug() is a part of _base.inc.sh
+		DEBUG=1
+		message_debug "Debug mode enabled."
+		
+	elif [[ "$1" == "--dry-run" || "$1" == "-n" ]]; then
+		# Dry-run mode. Display commands instead of executing them.
+		message_debug "Dry-run mode enabled. Only showing what *would* be executed, without doing anything."
+		DRY_RUN=1
+		
+	elif [[ "${1:0:1}" == "-" ]]; then
+		# Exit with an error message if an unknown option is passed
+		# (In contrast to parameters, options start with a “-”)
+		message_error "Unknown option: $1"
+		exit 1
+		
+	elif [[ -z "$VIDEO_OUTPUT" ]]; then
+		# First argument sets $VIDEO_OUTPUT (file must not already exist)
+		if [[ -f "$1" ]]; then
+			message_error "Output file \"$1\" already exists!"
+			exit 2
+		fi
+		VIDEO_OUTPUT="$1"
+		
+	else
+		# Add given filename to $IMAGES if it exists
+		if [[ ! -f "$1" ]]; then
+			message_error "File not found: $1"
+			exit 2
+		fi
+		#message_debug "Adding image \"$1\" to the queue."
+		IMAGES+=$1
+		
+	fi
+	shift
+	
+done
+
+# Ensure at least one image filename was given
+if [[ ${#IMAGES[@]} -lt 1 ]]; then
+	usage >&2
+	exit 1
+fi
+
+#message_debug "The following image filenames where specified: ${IMAGES[@]}"
+
+# 
+# Implement the dry-mode by defining the functions convert() and ffmpeg(),
+# which show a message instead of launching the executable with that name.
+# 
+# NOTE: Use "=foo" so we always get a executable path, like which(1) — instead
+# of showing function definitions like the shell builtin "which".
+# 
+if [[ $DRY_RUN -eq 1 ]]; then
+	function dry_run_command {
+		#_cmdline="convert"
+		#_cmdline="$0"
+		_cmdline=""
+		while [[ $# -gt 0 ]]; do
+			if [[ "$1" == *" "* ]]; then
+			#if [[ "$1" =~ " |" ]]; then
+				# argument contains whitespaces, wrap it in quotes
+				_cmdline+=" \"$1\""
+			else
+				_cmdline+=" $1"
+			fi
+			shift
+		done
+		message_info "$(printf "$_cmdline" | stripwhite)"
+	}
+	alias convert="dry_run_command convert"
+	alias ffmpeg="dry_run_command ffmpeg"
+	
+	if false; then
+	function ffmpeg {
+		_cmdline="convert"
+		while [[ $# -gt 0 ]]; do
+			#if [[ "$1" == *" "* ]]; then
+			if [[ "$1" =~ " |" ]]; then
+				# argument contains whitespaces, wrap it in quotes
+				_cmdline+=" \"$1\""
+			else
+				_cmdline+=" $1"
+			fi
+			shift
+		done
+		message_info "ffmpeg $@"
+	}
+	fi
+	
+fi
+#which ffmpeg; exit 42
+
+
+
+
+# 
+# Convert all images passed as an argument to PNG
+# 
+message_info "Converting images ..."
+declare -i i
+i=0
+for img in "${IMAGES[@]}"; do
+	img_converted="${SLIDESHOW_TMPDIR}/image-$(printf '%03d' "$i").png"
+
+	convert                              \
+		"$img"                           \
+		-resize "$VIDEO_RESOLUTION"      \
+		-background "$VIDEO_BACKGROUND"  \
+		-gravity center                  \
+		-extent "$VIDEO_RESOLUTION"      \
+		+repage                          \
+		"$img_converted"
+	
+	i+=1
+	
+done
+
+
+
+# 
+# Run ffmpeg
+# 
+message_info "Running ffmpeg ..."
+IMAGE_FILENAME_PATTERN="${SLIDESHOW_TMPDIR}/image-%03d.png"
+
+ffmpeg \
+	-r "1/${IMAGE_DURATION}" \
+	-i "${IMAGE_FILENAME_PATTERN}" \
+	-c:v "${VIDEO_CODEC}" \
+	-r "${VIDEO_FPS}" \
+	-pix_fmt "${VIDEO_PIXEL_FORMAT}" \
+	"${VIDEO_OUTPUT}"
+
+message_debug "Removing \"$SLIDESHOW_TMPDIR\" ..."
+rm -rf "${SLIDESHOW_TMPDIR}"
+
+

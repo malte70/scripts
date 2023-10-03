@@ -2,9 +2,6 @@
 #
 # Show current IP
 #
-# Copyright (c) 2013,2014,2021 Malte Bublitz
-# All rights reserved.
-#
 
 get_external_ip() {
 	IPINFO_FINGER="ip@ip.malte70.de"

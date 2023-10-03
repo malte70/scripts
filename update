@@ -179,8 +179,11 @@ if which pass &>/dev/null; then
 		message2 "Dry-run: Skipped."
 
 	else
-		pass git pull
-		pass git push
+		if [ ! -f ~/.update-skip-pass ]; then
+			pass git pull
+			pass git push
+			
+		fi
 
 	fi
 	echo

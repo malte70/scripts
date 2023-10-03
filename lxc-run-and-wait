@@ -1,0 +1,210 @@
+#!/bin/bash
+#   _                                                      _                    _ _   
+#  | |_  _____      _ __ _   _ _ __         __ _ _ __   __| |    __      ____ _(_) |_ 
+#  | \ \/ / __|____| '__| | | | '_ \ _____ / _` | '_ \ / _` |____\ \ /\ / / _` | | __|
+#  | |>  < (_|_____| |  | |_| | | | |_____| (_| | | | | (_| |_____\ V  V / (_| | | |_ 
+#  |_/_/\_\___|    |_|   \__,_|_| |_|      \__,_|_| |_|\__,_|      \_/\_/ \__,_|_|\__|
+#                                                                                     
+# 
+# NOTE:
+#   Some important environment variables and example values:
+#   
+#       HOSTNAME=sysinfo
+#       LIBVIRT_LXC_NAME=sysinfo
+#       LIBVIRT_LXC_UUID=a108bcb0-0d6a-44c8-bd2c-4cbf4acaa00f
+#       container=lxc-libvirt
+#       container_uuid=a108bcb0-0d6a-44c8-bd2c-4cbf4acaa00f
+# 
+
+source $(dirname $0)/_base.inc.sh
+
+
+
+
+
+###########################################################################
+# Clear the screen to get rid of unwanted things
+# 
+clear
+
+
+
+
+
+
+###########################################################################
+# Create an unprivileged user and become him or her
+# 
+#if [ $UID -eq 0 ]; then
+#    echo "Running as root!"
+#    useradd --comment 'LXC Unprivileged User' --uid 1000 --create-home --no-user-group --non-unique user
+#    getent passwd user
+#    su user -c "id"
+#    #su user -c "mkdir /mc/foobar__"
+#    #sudo -u user mkdir /mc/foobar__
+#    #ls -l /mc/foobar__
+#fi
+##getpcaps 1
+##read; exit
+
+
+
+
+
+###########################################################################
+# Warn about the limits of libvirtd+LXC once every host boot
+# 
+#WARNING_TEMPFILE="/tmp/.lxc-run-and-wait.warning-already-shown.$USER"
+WARNING_TEMPFILE="/tmp/.lxc-run-and-wait.$LIBVIRT_LXC_UUID"
+if [[ ! -f "$WARNING_TEMPFILE" ]]; then
+	cat <<EOF
+
+  ====>   Warnung zu LXC und libvirtd   <====
+
+    → Ohne aufwändige Konfiguration nur für kleine Terminal-
+      Anwendungen wie bbs/minishell geeignet.
+    → Netzwerk-Zugriff ist alles andere als trivial einzurichten!
+    
+  ${_ANSI_ATTR_UNDERLINE}FAZIT${_ANSI_RESET}
+
+    → Vorerst kein Einsatz im produktiven Betrieb, also auch nicht
+      zur Reduktion des Overheads der Minecraft-Server auf deepthought!
+    → Ideal wäre ein Skript, das ein Chroot mit Busybox, ArchLinux oder
+      Ubuntu anlegt und ähnlich eines Templates einrichtet.
+      So könnte ich mit einem Befehl ein Ubuntu-System zum Betrieb
+	  einer (Non-GUI-)Anwendung einrichten, und muss nur noch die
+      ebenfalls generierte libvirt-XML-Config importieren.
+
+${_ANSI_ATTR_BOLD}Dieser Hinweis wird nur angezeigt, falls eine versteckte Datei
+in /tmp ${_ANSI_RESET}${_ANSI_ATTR_ITALIC}nicht${_ANSI_RESET}${_ANSI_ATTR_BOLD} existiert.${_ANSI_RESET}
+
+EOF
+	touch "$WARNING_TEMPFILE"
+	
+fi
+
+
+
+
+
+###########################################################################
+# Parse command line options and set up the environment
+# 
+
+LXC_LIBVIRT_DOMAIN=""
+LXC_APP_ROOT=""
+while [ "${1:0:1}" == "-" ]; do
+	if [ "${1:0:9}" == "--domain=" ]; then
+		LXC_LIBVIRT_DOMAIN="${1:9}"
+		shift
+	elif [ "${1:0:11}" == "--app-root=" ]; then
+		LXC_APP_ROOT="${1:11}"
+		shift
+	elif [ "${1}" == "--cd-app-root" ]; then
+		cd "${LXC_APP_ROOT}"
+		shift
+	elif [ "${1}" == "--dhcp" ]; then
+		if ! grep -q -E 'tmpfs.*/etc ' /proc/self/mounts; then
+			# 
+			# Check if /etc is on a tmpfs
+			# 
+			echo;echo;echo;echo "$_ANSI_COLOR_LIGHT_RED"
+			if which figlet &>/dev/null; then
+				figlet -w 120 -f slant "!!! FATAL ERROR !!!" | sed 's|^|			|'
+				echo;echo
+			else
+				echo -e "\t\t!!! FATAL ERROR !!!"
+			fi
+			echo;echo "$_ANSI_COLOR_RED"
+			echo -e "\t-> /etc MUST be configured as a RAM filesystem in libvirt!"
+			echo -e "\t   If not, the host's /etc/resolv.conf is replaced, resulting"
+			echo -e "\t   in a lost internet connection..."
+			echo;echo;echo;echo;echo;echo;echo
+			#echo -n "$_ANSI_COLOR_LIGHT_YELLOW ∆ "
+			echo -n "$_ANSI_COLOR_LIGHT_YELLOW · "
+			read; exit
+		fi
+		if ! which dhclient &>/dev/null; then
+			echo "" >&2
+			echo "lxc-run-and-wait  ::  WARNING!" >&2
+			echo " → dhclient not available" >&2
+			echo -n "Press enter now to continue anyways... " >&2
+			read
+		else
+			echo "${_ANSI_COLOR_LIGHT_YELLOW}$(basename $0) ${_ANSI_COLOR_CYAN}:: ${_ANSI_COLOR_WHITE}Starting DHCP client...${_ANSI_RESET}"
+			#echo "Starting dhclient. This might take a while..."
+			#dhclient eth0
+			dhclient
+			#echo "Done."
+			if [ -x "/scripts/myip" ]; then
+				IP="$(/scripts/myip | tr -d "\n")"
+				#echo "IP Address: $IP"
+				echo "${_ANSI_COLOR_LIGHT_YELLOW}$(basename $0) ${_ANSI_COLOR_CYAN}:: ${_ANSI_COLOR_WHITE}My IP address is ${_ANSI_COLOR_LIGHT_GREEN}${IP}${_ANSI_RESET}${_ANSI_COLOR_LIGHT_WHITE}..."
+			fi
+		fi
+		shift
+	else
+		shift
+		echo "" >&2
+		echo "lxc-run-and-wait  ::  WARNING!" >&2
+		echo " → Unsupported option \"$1\"" >&2
+		echo -n "Press enter now to continue anyways... " >&2
+		read
+	fi
+done
+
+# 
+# Some fancy colorful information
+# 
+echo "${_ANSI_COLOR_LIGHT_YELLOW}$(basename $0) ${_ANSI_COLOR_CYAN}:: ${_ANSI_COLOR_WHITE}Starting libvirt domain \"${_ANSI_COLOR_LIGHT_GREEN}${LXC_LIBVIRT_DOMAIN}${_ANSI_RESET}${_ANSI_COLOR_LIGHT_WHITE}\"..."
+#echo "${_ANSI_COLOR_LIGHT_YELLOW}$(basename $0) ${_ANSI_COLOR_CYAN}:: ${_ANSI_COLOR_WHITE}Application mounted at ${_ANSI_COLOR_LIGHT_RED}${LXC_APP_ROOT}${_ANSI_RESET}${_ANSI_COLOR_LIGHT_WHITE}"
+echo "${_ANSI_COLOR_LIGHT_YELLOW}$(basename $0) ${_ANSI_COLOR_CYAN}:: ${_ANSI_COLOR_WHITE}Application mounted at ${_ANSI_COLOR_LIGHT_GREEN}${LXC_APP_ROOT}${_ANSI_RESET}${_ANSI_COLOR_LIGHT_WHITE}"
+#echo "LXC_LIBVIRT_DOMAIN=\"${LXC_LIBVIRT_DOMAIN}\""
+#echo "LXC_APP_ROOT=\"$LXC_APP_ROOT\""
+
+#echo " ♥ DEBUG STOP BUT WITH SOME LOVE ♥"; echo -n "press <enter>... "; read
+
+# 
+# The command we are going to launch
+# 
+cmd="$1"
+shift
+
+# 
+# Set $LANG and include the application path in $PATH
+# 
+#source /etc/locale.conf && export LANG
+export LANG="de_DE.UTF-8"
+export LC_COLLATE="C.UTF-8"
+export LANGUAGE="de:en_GB:en_US:en"
+
+cmd_path="$(dirname $(which $cmd))"
+[ -n "${LXC_APP_ROOT}" ] && PATH="${PATH}:${LXC_APP_ROOT}"
+#[ -n "${LXC_APP_ROOT}" -a "${LXC_APP_ROOT}" ! = "${cmd_path}"] && PATH="${PATH}:${LXC_APP_ROOT}"
+[ "${LXC_APP_ROOT}" != "${cmd_path}" ] && PATH="${PATH}:${cmd_path}"
+PATH="${PATH}:."
+#echo "PATH=\"${PATH}\""; read
+export PATH
+
+
+
+
+
+###########################################################################
+# Run the command
+# 
+env "$cmd" $@
+
+
+
+
+
+###########################################################################
+# The main purpose of this script - do not exit immediately,
+# but wait until the user hits <ENTER>
+# 
+
+#echo "[$(basename $0)] Press <ENTER> to stop this LXC container."
+echo "${_ANSI_COLOR_LIGHT_YELLOW}$(basename $0) ${_ANSI_COLOR_CYAN}:: ${_ANSI_COLOR_WHITE}Press ${_ANSI_COLOR_LIGHT_BLUE}<ENTER>${_ANSI_RESET}${_ANSI_COLOR_LIGHT_WHITE} to stop this LXC container.${_ANSI_RESET}"
+read
+

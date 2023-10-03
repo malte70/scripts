@@ -3,9 +3,6 @@
 # dvd2vob
 #    Reads out a DVD and dumps the content to a .vob file.
 #
-# Copyright (c) 2013 Malte Bublitz
-# All rights reserved.
-# 
 
 # helper functions
 usage() {

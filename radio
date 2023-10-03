@@ -1,8 +1,8 @@
 #!/bin/bash
 #
 # Play radio
-# Copyright (c) 2012-2013,2015 Malte Bublitz, https://malte-bublitz.de
-# Licensed under the WTFPL.
+# 
+# SPDX-License-Identifier: WTFPL
 #
 
 while :

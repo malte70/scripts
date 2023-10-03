@@ -1,0 +1,68 @@
+#!/bin/zsh
+# 
+# Create a custom Wine-Prefix for an application
+# 
+
+# 
+# Our application name
+MYAPP="$1"
+
+# 
+# Create a 32bit prefix -- many DLLs winetricks provides are 32bit-only.
+export WINEARCH=${WINEARCH:-win32}
+
+# 
+# Per-App-WINEPREFIX
+export WINEPREFIX="$HOME/.wine-$MYAPP"
+
+## TODO:
+## Create a Wine-Prefix inside ~/.local/opt, and create a launcher
+## shell script in ~/.local/bin
+export WINEPREFIX="$HOME/.local/opt/wine-$MYAPP"
+
+
+export WINEDEBUG="+all-fixme"
+
+# Registered Owner/Organization
+#WININFO_REG_OWNER="$(getent passwd $USER | cut -d: -f5)"
+#WININFO_REG_ORG=""
+#WININFO_START_PAGE="about:blank"
+WININFO_REG_OWNER="Malte Bublitz"
+WININFO_REG_ORG="rolltrepe3.de"
+WININFO_START_PAGE="https://startseite.malte70.de/mini/?host=$(hostname -f)&user=$USER&app=$MYAPP"
+
+
+# Config end
+##########################################
+
+if [[ -z "$MYAPP" ]]; then
+	echo 'MYAPP has to be set to an non-empty value!' >&2
+	exit 1
+fi
+if [[ -d "$WINEPREFIX" ]]; then
+	yad \
+		--title="wine-new-prefix" \
+		--window-icon="wine" \
+		--text='Wine-Prefix '"$WINEPREFIX"' already exists! Aborting.' \
+		--image="error" \
+		--button="gtk-ok:0" \
+		--escape-ok
+	exit 1
+	
+fi
+
+# Initialize WINEPREFIX
+wineboot -u
+
+# Install some fonts, set Windows Version to 10 and disable MIME associations and crash dialogs
+winetricks -q mimeassoc=off nocrashdialog win10
+# Basic fonts - you shouldn't skip them...
+winetricks corefonts tahoma lucida
+# Some more fonts, included in modern Windows releases
+winetricks consolas calibri comicsans georgia wingdings
+
+# Set computer owner/organization as well as the Internet Explorer homepage
+wine reg ADD "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion" /V "RegisteredOwner"        /T REG_SZ /F /D "$WININFO_REG_OWNER"
+wine reg ADD "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion" /V "RegisteredOrganization" /T REG_SZ /F /D "$WININFO_REG_ORG"
+wine reg ADD "HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\Main"     /V "Start Page"             /T REG_SZ /F /D "$WININFO_START_PAGE"
+
