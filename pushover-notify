@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""push: Send a notification to me using Pushover.
+
+"""pushover-notify: Send a notification to me using Pushover.
 
 Example config file (~/.config/pushover-notify.toml):
 
@@ -13,71 +14,216 @@ user_key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 import sys
 import os
 import platform
-import toml
+
+# https://github.com/Wyattjoh/pushover
+# from pushover import Pushover
 import pushover
+import requests
+import toml
 
 
-APP_NAME = "pushover-notify"
-APP_VERSION = "0.2"
-APP_UNIXNAME = APP_NAME.replace("-", "")
-APP_CONFIG = os.path.expanduser("~/.config/pushover-notify.toml")
+__script_name__ = os.path.basename(sys.argv[0])
+__version__ = "0.2.2"
 
 
-def pushover_send(api_key: str, user_key: str, message: str, title: str = ""):
-	# print(f"""Current config:
-	# 	api_key  = '{api_key}'
-	# 	user_key = '{user_key}'
-	# 	message  = '{message}'
-	# 	title    = '{title}'
-	# """)
-	# 	return False
+def get_config_file():
+	"""Return the path of the config file.
 
+	If $PUSHOVER_NOTIFY_CONFIG is set, it overriddes any default values.
+
+	Tests if a per-user config file exists, and if not, if a global
+	one exists. If no config file is found, a FileNotFoundError is raised.
+
+	TODO: Use an exception that better fits this use-case.
+
+	User config:
+		$HOME/.config/pushover-notify.toml
+	Global config:
+		/etc/pushover-notify.toml
+	"""
+	if "PUSHOVER_NOTIFY_CONFIG" in os.environ:
+		return os.getenv("PUSHOVER_NOTIFY_CONFIG")
+
+	for path in ["~/.config/pushover-notify.toml", "/etc/pushover-notify.toml"]:
+		if os.path.exists(os.path.expanduser(path)):
+			return os.path.expanduser(path)
+
+	# This point is only reached if no config file exists at all.
+	raise FileNotFoundError(
+		"No pushover-notify.toml config file found. You max set a custom location "
+		"with $PUSHOVER_NOTIFY_CONFIG, or you have to manually create one."
+	)
+
+
+def called_from_script():
+	"""Test if executed by a script instead of an interactive shell.
+
+	If called from an interactive shell, python is the process group leader. But if executed
+	from within a shell script, that shell is the process group leader.
+
+	@see https://stackoverflow.com/a/50283852
+	"""
+
+	# print(os.getpid.__name__, os.getpid())
+	# print(os.getpgid.__name__, os.getpgid(0))
+	# print(os.getsid.__name__, os.getsid(0))
+
+	return os.getpgid(0) == os.getsid(0)
+
+
+def pushover_send(
+	api_key: str,
+	user_key: str,
+	message: str,
+	title: str = "",
+	priority: int = -1,
+	url: str = "",
+	url_title: str = None,
+	sound: str = "shoot"
+):
 	po = pushover.Pushover(api_key)
 	po.user(user_key)
 
+	if called_from_script():
+		priority += 1
+	message += "\nPRIORITY=" + str(priority)
 	msg = po.msg(message)
 	if len(title) > 0:
 		msg.set("title", title)
 	else:
 		msg.set("title", platform.node())
 
+	# Message priority
+	# Pushover's default value is 0, but we use -1.
+	msg.set("priority", priority)
+
+	# Pass a URL with an optional title to the message
+	if len(url) > 1:
+		msg.set("url", url)
+		if len(url_title) > 1:
+			msg.set("url_title", url_title)
+
+	# Notification sound
+	# Default to my custom sound "shoot" instead of "pushover"
+	if len(sound) > 1:
+		msg.set("sound", sound)
+
 	return po.send(msg)
 
 
-def main():
-	config = toml.load(APP_CONFIG)
-	api_key = config.get("pushover").get("api_key")
-	user_key = config.get("pushover").get("user_key")
+def push(token, user, message, title=None, url=None, image=None):
+	api_url = "https://api.pushover.net/1/messages.json"
+	if not image:
+		r = requests.post(
+			api_url,
+			data={
+				token: token,
+				user: user,
+				message: message,
+				title: title,
+				url: url
+			}
+		)
+	else:
+		image_attachment = "image." + ".".join(image[0].split(".")[:-1])
+		r = requests.post(
+			api_url,
+			data={
+				token: token,
+				user: user,
+				message: message,
+				title: title,
+				url: url
+			},
+			files={
+				"attachment": (
+					image_attachment,
+					open(image[0], "rb"),
+					image[1]
+				)
+			}
+		)
 
-	if len(sys.argv) > 1:
-		title = sys.argv[1]
-		message = " ".join(sys.argv[2:])
+	print(r.text)
+
+
+def version(output_stream=sys.stdout):
+	print(__script_name__ + " " + __version__, file=output_stream)
+
+
+def usage(output_stream=sys.stdout):
+	print("Usage:", file=output_stream)
+	print(f"\techo \"<message>\" | {__script_name__} <title>", file=output_stream)
+	print("", file=output_stream)
+	print("Environment variables:", file=output_stream)
+	print("\tPUSHOVER_NOTIFY_CONFIG  Use this config file instead of the default", file=output_stream)
+	print("\t                        one (/etc/pushover-notify.toml).", file=output_stream)
+	print("\tPUSHOVER_APP_ID         Don't use the default API key. Reads from the", file=output_stream)
+	print("\t                        TOML section [app.<app-id>] instead of [pushover].", file=output_stream)
+	print("", file=output_stream)
+
+
+def main(message, title):
+	try:
+		config = toml.load(CONFIG_FILE)
+	except toml.decoder.TomlDecodeError:
+		print(f"FATAL ERROR: Config file \"{CONFIG_FILE}\" is no valid TOML!", file=sys.stderr)
+		sys.exit(2)
+
+	USER_KEY = config.get("pushover").get("user_key")
+	if CONFIG_SECTION[:4] == "app.":
+		API_KEY  = config.get("app").get(CONFIG_SECTION[4:]).get("api_key")
 
 	else:
-		title = ""
-		if len(sys.argv):
-			message = sys.argv[1]
-		else:
-			if sys.stdin.isatty():
-				print("Please enter a message to be sent:", file=sys.stderr)
-			message = sys.stdin.read()
+		API_KEY  = config.get("pushover").get("api_key")
 
-	if not pushover_send(api_key, user_key, message, title):
-		print("[{APP_NAME}] Error in pushover_send()", file=sys.stderr)
-		return 1
+	# print(SCRIPT_NAME + " :: api_key  = \"" + API_KEY + "\"")
+	# print(SCRIPT_NAME + " :: user_key = \"" + USER_KEY + "\"")
 
-	return 0
+	# _ret = push(
+	# 	API_KEY,
+	# 	USER_KEY,
+	# 	message,
+	# 	title,
+	# 	"http://torchwood.tardis.malte70.de",
+	# 	image = ["gnome-document-save-512.png", "image/png"]
+	# )
+	# if _ret is not None:
+	# 	print(SCRIPT_NAME + " :: Return value of push():\n" + _ret, file=sys.stderr)
+	if not pushover_send(API_KEY, USER_KEY, message, title):
+		print(f"[{__script_name__}] Error: pushover_send() failed.")
+
+
+# CONFIG_FILE    = os.getenv("PUSHOVER_NOTIFY_CONFIG", "/etc/pushover-notify.toml")
+CONFIG_FILE    = get_config_file()
+if "PUSHOVER_APP_ID" in os.environ.keys():
+	CONFIG_SECTION = "app." + os.environ.get("PUSHOVER_APP_ID")
+else:
+	CONFIG_SECTION = "pushover"
 
 
 if __name__ == "__main__":
 	if "--help" in sys.argv or "-h" in sys.argv:
-		print("Usage:")
-		print(f"\t{APP_NAME} [--help|-h|--version|-V]")
-		print(f"\t*command* | {APP_NAME} [*title*]")
+		usage()
 		sys.exit(0)
 
-	elif "--version" in sys.argv or "-V" in sys.argv:
-		print(f"{APP_NAME} v{APP_VERSION}")
+	elif "--version" in sys.argv:
+		version()
 		sys.exit(0)
 
-	sys.exit(main())
+	if len(sys.argv) < 2:
+		title = ""
+	else:
+		title = sys.argv[1]
+
+	if sys.stdin.isatty():
+		print("Please enter a message:", file=sys.stderr)
+
+	try:
+		message = sys.stdin.read()
+
+	except KeyboardInterrupt:
+		print("\nCtrl+C pressed. Aborting...")
+		sys.exit(1)
+
+	main(message, title)
