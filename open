@@ -35,8 +35,10 @@ usage() {
 	echo "  --help -h     Show this help and exit"
 	echo "  -a <App>      Open the file using <App>"
 	echo "  -t            Edit the file in \$VISUAL"
-	echo "  -e            Edit the file in \$EDITOR"
-	echo "  --x11         Start a GUI application without blocking the terminal"
+	echo "  -e            Edit the file in \$EDITOR (implies --no-fork)"
+	echo "  --fork        Start a GUI application without blocking the terminal"
+	echo "                (fork to background)"
+	echo "  --no-fork     Start application in foreground"
 	echo 
 	echo "For \"-a <App>\": If the filename is omitted, the application is"
 	echo "started without arguments."
@@ -91,6 +93,7 @@ fi
 
 APP=$(get_default_app)
 OPT_HELP=0
+OPT_FORK=1
 FILES=()
 DEBUG=${DEBUG:-0}
 while [[ $# -gt 0 ]]; do
@@ -105,6 +108,12 @@ while [[ $# -gt 0 ]]; do
 		
 	elif [[ "$1" == "--debug" ]]; then
 		DEBUG=1
+		
+	elif [[ "$1" == "--fork" ]]; then
+		OPT_FORK=1
+		
+	elif [[ "$1" == "--no-fork" ]]; then
+		OPT_FORK=0
 		
 	elif [[ "$1" == "-a" ]]; then
 		if [[ $# -lt 2 || ${2:0:1} == "-" ]]; then
@@ -127,6 +136,7 @@ while [[ $# -gt 0 ]]; do
 			exit 1
 		fi
 		APP=$EDITOR
+		OPT_FORK=0
 		
 	elif [[ ${1:0:1} == "-" ]]; then
 		usage >&2
@@ -140,6 +150,7 @@ while [[ $# -gt 0 ]]; do
 	shift
 	
 done
+FILES_COUNT=${#FILES[@]}
 
 _debug_files=""
 for f in ${FILES[@]}; do
@@ -179,8 +190,22 @@ for FILE in ${FILES[@]}; do
 		exit 1
 	fi
 	
+	if [[ $FILE_COUNT -eq 1 ]]; then
+	fi
+	
 	# Open file using $APP, detached from the terminal
 	$APP "$FILE" </dev/null &>/dev/null &|
+	# Open file using $APP
+	if [[ $OPT_FORK -eq 1 ]]; then
+		# Run detached from the terminal (fork to background)
+		message_debug "Running '$APP \"$(realpath ${FILE})\"' (detached from TTY)"
+		$APP "${FILE}" </dev/null &>/dev/null &|
+	else
+		# Run in foreground
+		message_debug "Running '$APP \"$(realpath ${FILE})\"'"
+		#$APP "$(realpath ${FILE})"
+		$APP "${FILE}"
+	fi
 	
 done
 
