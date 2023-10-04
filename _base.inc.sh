@@ -168,7 +168,7 @@ version() {
 
 
 ##########################################
-# OS detection
+# OS detection and $HOST for bash
 # 
 
 OS=`uname -s`
@@ -189,6 +189,10 @@ else
 		OSVARIANT=$OS
 	fi
 	OSVERSION=`uname -r`
+fi
+#if [[ -n $BASH_VERSION ]]; then
+if [[ -n $HOST ]]; then
+	export HOST=$HOSTNAME
 fi
 
 
@@ -222,12 +226,14 @@ fi
 if [[ -n $ZSH_NAME ]]
 then
 	set-xterm-title() {
-		print -Pn "\e]0;$1\a"
+		[[ "$TERM" == *xterm* ]] \
+			&& print -Pn "\e]0;$1\a"
 	}
 	
 elif [[ -n $BASH_VERSION ]]; then
 	set-xterm-title() {
-		printf "\033]0;%s\007" "$@"
+		[[ "$TERM" == *xterm* ]] \
+			&& printf "\033]0;%s\007" "$@"
 	}
 	
 fi
