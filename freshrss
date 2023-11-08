@@ -2,13 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import sys
-import os
+import dataclasses
 import PyQt5.QtCore
 import PyQt5.QtGui
 import PyQt5.QtWidgets
 import PyQt5.QtWebEngineWidgets
 
 
+@dataclasses.dataclass
 class AppInfo(object):
 	Name        = "FreshRSS"
 	Version     = "0.20230920"
@@ -40,6 +41,17 @@ class FreshRSSMainWindow(PyQt5.QtWidgets.QMainWindow):
 		self.showMaximized()
 
 
+def version():
+	print(AppInfo.Name + " " + AppInfo.Version)
+	print("\t" + AppInfo.Description.replace("\n", "\n\t"))
+	# print("\n\tWebApp URL: " + AppInfo.WebViewURL)
+	print()
+
+
+def usage(out=sys.stdout):
+	print(f"Usage: {sys.argv[0]} [--version|--help]", file=out)
+
+
 def main():
 	app = PyQt5.QtWidgets.QApplication(sys.argv)
 
@@ -48,4 +60,14 @@ def main():
 
 
 if __name__ == "__main__":
+	if "--version" in sys.argv:
+		version()
+		sys.exit(0)
+	elif "--help" in sys.argv:
+		usage()
+		sys.exit(0)
+	elif len(sys.argv) > 1:
+		print("Unknown option(s): " + sys.argv[1:], file=sys.stderr)
+		sys.exit(2)
+
 	main()
