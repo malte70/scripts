@@ -1,9 +1,14 @@
 #!/bin/bash
 #
 # Play radio
-# Copyright (c) 2012-2013,2015 Malte Bublitz, https://malte-bublitz.de
-# Licensed under the WTFPL.
+# 
+# SPDX-License-Identifier: WTFPL
 #
+
+if ! which mpg123 &>/dev/null; then
+	echo "Error: mpg123 needed." >&2
+	exit 1
+fi
 
 while :
  do
@@ -13,6 +18,7 @@ while :
 	echo "1: Morow"
 	echo "2: HardBase.FM"
 	echo "3: HARDRADIO"
+	echo "4: EBM Radio"
 	echo "q: quit"
 	echo
 	echo -n "? "
@@ -23,6 +29,8 @@ while :
 		2) mpg123 "http://listen.hardbase.fm/tunein-mp3-pls"
 			;;
 		3) mpg123 "http://listen.hardradio.de/stream"
+			;;
+		4) mpg123 "http://www.ebm-radio.org:7000/"
 			;;
 		q) exit 0
 		   ;;
