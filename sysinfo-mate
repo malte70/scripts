@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-DIALOG=`which matedialog`
+DIALOG=`which zenity`
 SYSINFO=`which sysinfo`
 
 TMPFILE="/tmp/sysinfo.$$"
@@ -17,7 +17,7 @@ touch $TMPFILE
 	echo "Installierter Arbeitsspeicher:$(lshw -c memory 2>/dev/null |grep size | cut -d: -f2)"
 ) > $TMPFILE
 
-matedialog \
+env $DIALOG \
 	--text-info \
 	--filename=$TMPFILE \
 	--title=`basename $0`

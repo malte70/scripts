@@ -3,17 +3,29 @@
 # open
 #    Provide OS X's open utility on GNU/Linux
 # 
-# Copyright (c) 2015 Malte Bublitz, http://malte-bublitz.de
-# All rights reserved.
-#
 
 SCRIPT_NAME="open"
-SCRIPT_VERSION="0.1"
+SCRIPT_VERSION="0.2"
 
+source $(dirname $0)/_base.inc.sh
+
+
+
+##########################################
+# Functions
+# 
+
+# 
+# Show some information about this script
+# 
 version() {
 	echo "$SCRIPT_NAME $SCRIPT_VERSION"
-	echo "Provides OS X's open utility on GNU/Linux"
+	echo "Provides macOS's open utility on GNU/Linux"
 }
+
+# 
+# Display a usage help
+# 
 usage() {
 	echo "Usage:"
 	echo "   $SCRIPT_NAME [OPTIONS] [FILENAME]"
@@ -22,58 +34,180 @@ usage() {
 	echo "  --version -V  Show the version and exit"
 	echo "  --help -h     Show this help and exit"
 	echo "  -a <App>      Open the file using <App>"
+	echo "  -t            Edit the file in \$VISUAL"
+	echo "  -e            Edit the file in \$EDITOR (implies --no-fork)"
+	echo "  --fork        Start a GUI application without blocking the terminal"
+	echo "                (fork to background)"
+	echo "  --no-fork     Start application in foreground"
 	echo 
-	echo "If the filename is omitted, the application is launched without arguments."
+	echo "For \"-a <App>\": If the filename is omitted, the application is"
+	echo "started without arguments."
+	echo "The original open command uses TextEdit.app with \"-t\", and"
+	echo "your default text editor with \"-e\""
 	echo 
 }
 
+# 
+# Helper used to launch "gio open"
+#     Since $APP cannot contain arguments/parameters, we have to use this workaround.
+# 
+gio_open() {
+	if ! which gio &>/dev/null
+	then
+		return 1
+	fi
+	gio open $@
+}
+
+# 
+# Detect the system's default application for opening files.
+# 
+get_default_app() {
+	if [[ $OS == "Mac OS X" ]]; then
+		APP="/usr/bin/open"
+	elif which gio &>/dev/null; then
+		APP="gio_open"
+	elif which xdg-open &>/dev/null; then
+		APP="xdg-open"
+	else
+		echo "$SCRIPT_NAME: Error: Neither gio or xdg-open found in \$PATH!" >&2
+		exit 1
+	fi
+	echo "$APP"
+}
+
+
+
+##########################################
+# Parse command line
+# 
 if [[ $# -eq 0 ]]; then
     usage >&2
-    exit 1
-elif [[ "$1" == "--version" || "$1" == "-V" ]]; then
-    version
-    exit 0
-elif [[ "$1" == "--help" || "$1" == "-h" ]]; then
-    version
-    usage
-    exit 0
+    echo exit 1
 fi
-
-if [[ -z "$DISPLAY" ]]; then
-    echo "$SCRIPT_NAME: Error: \$DISPLAY not set!" >&2
-    exit 1
-fi
-
-if [[ "$1" == "-a" ]]; then
-    if [[ $# -ne 2 && $# -ne 3 ]]; then
-        usage >&2
-        exit 1
-    fi
-    shift
-    APP="$1"
-    shift
-else
-    if which gvfs-open &>/dev/null; then
-        APP="gvfs-open"
-    elif which xdg-open &>/dev/null; then
-        APP="xdg-open"
-    else
-        echo "$SCRIPT_NAME: Error: xdg-open not found!" >&2
-        exit 1
-    fi
-fi
-
-FILE="$1"
-
-if [[ ! -r $FILE ]]; then
-	echo "$SCRIPT_NAME: File not found or not readable: $FILE" >&2
+if [[ -z "$DISPLAY" && $OS != "Mac OS X" ]]; then
+	#echo "$SCRIPT_NAME: Error: \$DISPLAY not set!" >&2
+	message_error "\$DISPLAY not set! ${_ANSI_ATTR_ITALIC}open${_ANSI_ATTR_ITALIC_RESET} only works on X11" >&2
 	exit 1
 fi
 
-if ! which $APP &>/dev/null; then
-	echo "$SCRIPT_NAME: Command not found: $APP" >&2
-	exit 1
+APP=$(get_default_app)
+OPT_HELP=0
+OPT_FORK=1
+FILES=()
+DEBUG=${DEBUG:-0}
+while [[ $# -gt 0 ]]; do
+	if [[ "$1" == "--version" || "$1" == "-V" ]]; then
+		version
+		exit 0
+		
+	elif [[ "$1" == "--help" || "$1" == "-h" ]]; then
+		version
+		usage
+		exit 0
+		
+	elif [[ "$1" == "--debug" ]]; then
+		DEBUG=1
+		
+	elif [[ "$1" == "--fork" ]]; then
+		OPT_FORK=1
+		
+	elif [[ "$1" == "--no-fork" ]]; then
+		OPT_FORK=0
+		
+	elif [[ "$1" == "-a" ]]; then
+		if [[ $# -lt 2 || ${2:0:1} == "-" ]]; then
+			usage >&2
+			exit 1
+		fi
+		shift
+		APP="$1"
+		
+	elif [[ "$1" == "-t" ]]; then
+		if [[ -z "$VISUAL" ]]; then
+			message_error "You need to set \$VISUAL to use \"-t\"."
+			exit 1
+		fi
+		APP=$VISUAL
+		
+	elif [[ "$1" == "-e" ]]; then
+		if [[ -z "$EDITOR" ]]; then
+			message_error "You need to set \$EDITOR to use \"-e\"."
+			exit 1
+		fi
+		APP=$EDITOR
+		OPT_FORK=0
+		
+	elif [[ ${1:0:1} == "-" ]]; then
+		usage >&2
+		exit 1
+		
+	else
+		FILES+="$1"
+		
+	fi
+	
+	shift
+	
+done
+FILES_COUNT=${#FILES[@]}
+
+_debug_files=""
+for f in ${FILES[@]}; do
+	_debug_files+="\"$f\""
+done
+message_debug "APP   = \"$APP\""
+message_debug "FILES = ($_debug_files)"
+message_debug "\${#FILES[@]} = ${#FILES[@]}"
+unset _debug_files
+#[[ $DEBUG -eq 1 ]] && exit 0
+
+
+
+##########################################
+# Launch app if no files given
+# 
+if [[ ${#FILES[@]} -eq 0 ]]; then
+	message_debug "No files given. Launching \$APP..."
+	exit 42
 fi
 
-$APP $FILE </dev/null &>/dev/null &|
+
+
+##########################################
+# Open all files/URLs from $FILES
+# 
+for FILE in ${FILES[@]}; do
+	# Check if file is readable or looks like a valid URL
+	if [[ $FILE == *:/* || ! -r $FILE ]]; then
+		echo "$SCRIPT_NAME: File not found or not readable: $FILE" >&2
+		exit 1
+	fi
+	
+	# Ensure a valid value for $APP
+	if ! which $APP &>/dev/null; then
+		echo "$SCRIPT_NAME: Command not found: $APP" >&2
+		exit 1
+	fi
+	
+	if [[ $FILE_COUNT -eq 1 ]]; then
+	fi
+	
+	# Open file using $APP, detached from the terminal
+	$APP "$FILE" </dev/null &>/dev/null &|
+	# Open file using $APP
+	if [[ $OPT_FORK -eq 1 ]]; then
+		# Run detached from the terminal (fork to background)
+		message_debug "Running '$APP \"$(realpath ${FILE})\"' (detached from TTY)"
+		$APP "${FILE}" </dev/null &>/dev/null &|
+	else
+		# Run in foreground
+		message_debug "Running '$APP \"$(realpath ${FILE})\"'"
+		#$APP "$(realpath ${FILE})"
+		$APP "${FILE}"
+	fi
+	
+done
+
+
 

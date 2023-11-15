@@ -1,0 +1,36 @@
+#!/usr/bin/env zsh
+# 
+# Activate xscreensaver, and start it if neccessary.
+# 
+
+[[ -z $DISPLAY ]] && { echo '\$DISPLAY not set!'>&2; exit 2 }
+
+
+# Launch a X11 application detatched from out TTY
+start() {
+	$@ </dev/null &>/dev/null &|
+}
+
+# Lock screen using D-Bus and the Display Manager
+lock() {
+	dbus-send \
+		--system \
+		--dest=org.freedesktop.DisplayManager \
+		--print-reply \
+		/org/freedesktop/DisplayManager/Session0 \
+		org.freedesktop.DisplayManager.Session.Lock
+}
+
+
+pidof xscreensaver &>/dev/null \
+	|| start \
+		xscreensaver --no-splash
+
+
+#echo "Locking in 5 seconds..." \
+#	&& sleep 5s \
+#	&& lock
+
+#sleep 5s
+lock
+

@@ -7,7 +7,7 @@
 #  - https://www.lambdatest.com/blog/python-selenium-screenshots/
 #  - https://pythonbasics.org/selenium-screenshot/
 #  - https://www.vionblog.com/selenium-headless-firefox-webdriver-using-pyvirtualdisplay/
-# 
+#
 
 import sys
 import time
@@ -26,80 +26,84 @@ except ImportError:
 	print("Get it at http://pypi.python.org/pypi/selenium", file=sys.stderr)
 	sys.exit(1)
 
-def make_screenshot(url, img, window_size=(1280,1024), browser_timeout=30, sleep_time=1):
+
+def make_screenshot(url, img, window_size=(1280, 1024), browser_timeout=30, sleep_time=1):
 	window_width  = window_size[0]
 	window_height = window_size[1]
-	screen_size = (window_width+100, window_height+100)
-	
+	screen_size = (window_width + 100, window_height + 100)
+
 	display = Display(visible=False, size=screen_size)
 	display.start()
-	
-	# 
+
+	#
 	# Try Firefox driver first, and fall back to Chrome
 	# Needed on Raspbian, since geckodriver is not in the repositories
 	#  -> https://raspberrypi.stackexchange.com/a/120429
-	# 
+	#
 	if shutil.which("geckodriver"):
 		browser = webdriver.Firefox(service_log_path="/dev/null")
-		
+
 	elif shutil.which("chromedriver"):
 		browser = webdriver.Chrome()
-		
+
 	else:
 		print("Errror: Neither geckodriver nor chromedriver found in $PATH!", file=sys.stderr)
-		print("Please install at least one of them (geckodriver is preferred, but not available on Raspberry Pi OS for example.", file=sys.stderr)
+		print("Please install at least one of them (geckodriver is preferred, but not", file=sys.stderr)
+		print("available on Raspberry Pi OS for example.", file=sys.stderr)
 		sys.exit(1)
-		
+
 	browser.set_window_size(
 		window_width,
 		window_height
 	)
-	
+
 	# Load URL
 	browser.get(url)
-	
+
 	# Set timeouts
 	browser.set_script_timeout(browser_timeout)
 	browser.set_page_load_timeout(browser_timeout)
-	
+
 	# Wait a few seconds so the page get's rendered...
 	time.sleep(sleep_time)
-	
+
 	# Hide scrollbars (if not we might get a white border
 	# at the right
 	browser.execute_script('document.querySelector("body").style.overflow="hidden";')
-	
+
 	# Save screenshot
 	browser.save_screenshot(img)
-	
+
 	# Bye bye...
 	browser.quit()
 	display.stop()
-	
+
+
 def usage(out=sys.stdout):
 	argv0 = os.path.basename(sys.argv[0])
 	print("Usage:", file=out)
 	print("\t{} [-h|--help|-V|--version]".format(argv0), file=out)
 	print("\t{} <website url> <image filename>".format(argv0), file=out)
-	print("Environment variables:", file=out)
+	print("\nEnvironment variables:", file=out)
 	print("\tSCREENSHOT_WIDTH   -> Browser width (default: 1280)", file=out)
 	print("\tSCREENSHOT_HEIGHT  -> Browser height (default: 1024)", file=out)
 	print("\tSCREENSHOT_TIMEOUT -> Timeout for the WebDriver (default: 15)", file=out)
 	print("\tSCREENSHOT_SLEEP   -> Additional sleep time (default: 5)", file=out)
-	
+
+
 def main():
 	url = sys.argv[1]
 	img = sys.argv[2]
 	if os.path.exists(img):
 		print("File exists: {}".format(img), file=sys.stderr)
 		return 1
-		
+
 	size = (
-		os.getenv("SCREENSHOT_WIDTH",  1280),
+		os.getenv("SCREENSHOT_WIDTH", 1280),
 		os.getenv("SCREENSHOT_HEIGHT", 1024),
 	)
 	timeout    = os.getenv("SCREENSHOT_TIMEOUT", 15)
-	sleep_time = os.getenv("SCREENSHOT_SLEEP",   5)
+	sleep_time = os.getenv("SCREENSHOT_SLEEP", 5)
 	make_screenshot(
 		url,
 		img,
@@ -107,25 +111,34 @@ def main():
 		timeout,
 		sleep_time,
 	)
-	
+
 	return 0
-	
+
+
 if __name__ == "__main__":
-	for arg in sys.argv:
+	for argc, arg in enumerate(sys.argv):
+		if argc == 0:
+			continue
+
 		if arg in ("-V", "--version"):
 			print("website-screenshot 0.3")
 			sys.exit(0)
-			
+
+		# elif arg in ("-h", "--help") or len(sys.argv) != 3:
+		elif arg in ("-h", "--help"):
+			# print("Usage:")
+			# print("\twebsite-screenshot <-h|--help|-V|--version>")
+			# print("\twebsite-screenshot <url> <screenshot filename>")
+			# print()
+			usage()
+			sys.exit(0 if arg in ("-h", "--help") else 1)
+
 		elif arg.startswith("-"):
-			print("Unknown option: "+arg)
+			print("Unknown option: " + arg)
 			sys.exit(1)
-			
-		elif arg in ("-h", "--help") or len(sys.argv) != 3:
-			print("Usage:")
-			print("\twebsite-screenshot <-h|--help|-V|--version>")
-			print("\twebsite-screenshot <url> <screenshot filename>")
-			print()
-			sys.exit(0 if arg in ("-h","--help") else 1)
-			
+
+		else:
+			usage(sys.stderr)
+			sys.exit(1)
+
 	main()
-	

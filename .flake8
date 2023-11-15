@@ -1,0 +1,8 @@
+[flake8]
+# W191 indentation contains tabs
+# E221 multiple spaces before operator
+ignore = W191, E221, Q000
+exclude = .git, venv, .venv
+max-line-length = 120
+per-file-ignores =
+	freshrss: F841

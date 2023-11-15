@@ -87,7 +87,7 @@ function message_spaces_fill {
 	#	env msg_text="$1" msg_max_length="$2" msg_space=" " python -c 'import os,sys
 	#msg_text=os.environ.get("msg_text",sys.argv[0]);msg_max_length=os.environ.get("msg_max_length");msg_space=os.environ.get("msg_space"," ")
 	#print(msg_text + (msg_max_length - min(len(msg_text),msg_max_length)))'
-	python -c '# python -c […] "<msg_text>" <msg_max_length> "<msg_space>"
+	python3 -c '# python -c […] "<msg_text>" <msg_max_length> "<msg_space>"
 def text_fill_spaces(msg_text: str, msg_max_length: int = 0, msg_space: str = " ") -> str:
         msg_space_count = msg_max_length - min(len(msg_text), msg_max_length)
         return msg_text + (msg_space_count*msg_space)
@@ -179,8 +179,11 @@ if which pass &>/dev/null; then
 		message2 "Dry-run: Skipped."
 
 	else
-		pass git pull
-		pass git push
+		if [ ! -f ~/.update-skip-pass ]; then
+			pass git pull
+			pass git push
+			
+		fi
 
 	fi
 	echo

@@ -6,9 +6,6 @@
 # Shows information about a git repository
 # for the zsh prompt.
 #
-# Copyright (c) 2014-2016 Malte Bublitz, http://malte70.bplaced.net
-# All rights reserved.
-#
 
 SCRIPT_NAME="gitinfo"
 SCRIPT_PROJECT_NAME=""
@@ -100,8 +97,11 @@ else
 		elif [[ "${REMOTE:0:23}" == "https://git.heroku.com/" ]]; then
 			UPSTREAM="heroku/${REMOTE:23:-4}"
 			
-		elif [[ "${REMOTE:0:19}" == "gitea@gitea.rt3x.de" ]]; then
-			UPSTREAM="gitea::${REMOTE:20:-4}:$BRANCH"
+		elif [[ "${REMOTE:0:15}" == "git@git.rt3x.de" ]]; then
+			UPSTREAM="git.rt3x.de/${REMOTE:16:-4}:$BRANCH"
+			
+		elif [[ "${REMOTE:0:22}" == "git@git.un-hack-bar.de" ]]; then
+			UPSTREAM="unhb::${REMOTE:23:-4}:$BRANCH"
 			
 		else
 			UPSTREAM="${REMOTE}:$BRANCH"

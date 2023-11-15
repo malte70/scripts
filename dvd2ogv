@@ -4,9 +4,6 @@
 #    Rips a DVD Movie to an Ogg file.
 #    Interactive script.
 #
-# Copyright (c) 2013-2015 Malte Bublitz
-# All rights reserved.
-# 
 
 # configuration
 DVDDEVICE="/dev/sr0"

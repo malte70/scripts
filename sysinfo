@@ -1,32 +1,40 @@
 #!/usr/bin/env bash
 # Use bash or zsh, sh won't work in many cases!
+# 
+# TODO:
+#  - info_env: Add $MAIL
+#  - info_locale: $TZ (or /etc/localtime or date +"%Z %z")
+# 
 
 LOCALE_OLD=$LC_ALL
 export LC_ALL=C
 
 version_info() {
-	echo "sysinfo 0.20180713"
-	echo "Copyright (c) 2014-2018 Malte Bublitz"
+	echo "sysinfo 0.20230119"
+	echo "Copyright (c) 2014-2023 Malte Bublitz"
 }
 display_help() {
 	version_info
-	echo
-	echo "Options:
-	-V	Display version information
-	-h	Display this help
-Reort options
-	-o	Operating System
-	-r	OS Kernel
-	-p	Platform/machine type
-	-n	Nodename/Hostname
-	-u	Uptime
-	-w	Window Manager
-	-m	Used/available RAM
-	-H  Hardware Info
-	-c	CPU info
-	-e	Environment (Shell/Editor/Browser)
-	-l  Locale
-	-a	Display all information"
+	echo -e "
+Generic options:
+\t-V, --version\tDisplay version information
+\t-h, --help\tDisplay this help
+
+Output control:
+\t-o\tOperating System
+\t-r\tOS Kernel
+\t-p\tPlatform/machine type
+\t-n\tNodename/Hostname
+\t-u\tUptime
+\t-w\tWindow Manager
+\t-m\tUsed/available RAM
+\t-H\tHardware Info
+\t-c\tCPU info
+\t-t\tTerminal info
+\t-e\tEnvironment (Shell/Editor/Browser)
+\t-l\tLocale
+\t-a\tDisplay all information
+"
 }
 info_os() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 3))');'`
@@ -195,14 +203,18 @@ info_env() {
     # $SHELL
     # 
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
-	[ -n "$SHELL" ] && echo "\$SHELL${DOTS}: `basename $SHELL`"
+	#[ -n "$SHELL" ] && echo "\$SHELL${DOTS}: `basename $SHELL`"
+	ENV_SHELL=="$(basename $(which $SHELL)) ($(dirname $(which $SHELL)))"
+	[ -n "$SHELL" ] && echo "\$SHELL${DOTS}: $ENV_SHELL"
 	
     # 
     # $EDITOR
     # 
     if [ -n "$EDITOR" ]; then
         # Values might be "vim" or "/bin/vim", so run which before basename!
-        ENV_EDITOR="$(basename $(which $EDITOR))"
+        #ENV_EDITOR="$(basename $(which $EDITOR))"
+        #ENV_EDITOR="$(which $EDITOR)"
+		ENV_EDITOR="$(basename $(which $EDITOR)) ($(dirname $(which $EDITOR)))"
     else
         ENV_EDITOR=""
     fi
@@ -210,15 +222,58 @@ info_env() {
 	[ -n "$ENV_EDITOR" ] && echo "\$EDITOR${DOTS}: $ENV_EDITOR"
     
     # 
+    # $VISUAL
+    # 
+    if [ -n "$VISUAL" ]; then
+		ENV_VISUAL="$(basename $(which $VISUAL)) ($(dirname $(which $VISUAL)))"
+    else
+        ENV_VISUAL=""
+    fi
+	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 8))');'`
+	[ -n "$ENV_VISUAL" ] && echo "\$VISUAL${DOTS}: $ENV_VISUAL"
+    
+    # 
     # $BROWSER
     # 
     if [ -n "$BROWSER" ]; then
-        ENV_BROWSER="$(basename $(which $BROWSER))"
+		ENV_BROWSER="$(basename $(which $BROWSER)) ($(dirname $(which $BROWSER)))"
     else
         ENV_BROWSER=""
     fi
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 9))');'`
 	[ -n "$ENV_BROWSER" ] && echo "\$BROWSER${DOTS}: $ENV_BROWSER"
+}
+info_terminal() {
+	if [ -z "$TTY" ]; then
+		# Ensure $TTY is set up as expected
+		TTY=$(tty 2>/dev/null)
+	fi
+	
+	# Check if we are connected to a pseudo terminal device
+	if [ -z $TTY ]; then
+		DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 13))');'`
+		echo "Terminal TTY${DOTS}: (no pseudo terminal)"
+		return
+	fi
+	
+	# Terminal device
+	if [ -n "$TTY" ]; then
+		DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 13))');'`
+		echo "Terminal TTY${DOTS}: $TTY"
+	fi
+	
+	# Terminal type
+	if [ -n "$TERM" ]; then
+		DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 14))');'`
+		echo "Terminal Type${DOTS}: $TERM"
+	fi
+	
+	# Terminal size: Number of columns * Number of lines
+	if [ -n "$COLUMNS" ] && [ -n "$LINES" ]; then
+		DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 14))');'`
+		echo "Terminal Size${DOTS}: ${COLUMNS}x${LINES}"
+	fi
+	
 }
 info_locale() {
 	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
@@ -226,9 +281,11 @@ info_locale() {
 	[ -n $LANG ] && locale=$LANG
 	[ -z $locale ] && locale=C
 	echo "Locale${DOTS}: $locale"
+	
+	# TODO: Time zone
 }
 info_all() {
-	export DESC_COL_LENGTH=9
+	export DESC_COL_LENGTH=14
 	info_os
 	info_kernel
 	info_platform
@@ -243,6 +300,7 @@ info_all() {
 		info_android
 	fi
 	info_env
+	info_terminal
 	info_locale
 }
 
@@ -260,7 +318,7 @@ fi
 DESC_COL_LENGTH=2
 
 # parse arguments once to get $DESC_COL_LENGTH
-while getopts "VhornuwmeplacH" opt; do
+while getopts "VhornuwmetplacH" opt; do
 	case $opt in
 		o)
 			if [[ $DESC_COL_LENGTH -lt 3 ]]; then
@@ -313,8 +371,13 @@ while getopts "VhornuwmeplacH" opt; do
 			fi
 			;;
 		e)
-			if [[ $DESC_COL_LENGTH -lt 8 ]]; then
-				DESC_COL_LENGTH=8
+			if [[ $DESC_COL_LENGTH -lt 9 ]]; then
+				DESC_COL_LENGTH=9
+			fi
+			;;
+		t)
+			if [[ $DESC_COL_LENGTH -lt 14 ]]; then
+				DESC_COL_LENGTH=14
 			fi
 			;;
 		l)
@@ -328,7 +391,7 @@ done
 OPTIND=1
 
 # parse arguments again, and now, display the information.
-while getopts "VhornuwmpelaHc" opt; do
+while getopts "VhornuwmpetlaHc" opt; do
 	case $opt in
 		V)
 			version_info
@@ -367,6 +430,9 @@ while getopts "VhornuwmpelaHc" opt; do
 			;;
 		e)
 			info_env
+			;;
+		t)
+			info_terminal
 			;;
 		l)
 			info_locale
