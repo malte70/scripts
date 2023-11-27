@@ -9,6 +9,12 @@ appname  = "Gallifrey"
 api_key  = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 user_key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
+Optional: Alternative apps:
+
+[app.foo]
+appname = "Foo"
+api_key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
 """
 
 import sys
@@ -50,7 +56,7 @@ def get_config_file():
 
 	# This point is only reached if no config file exists at all.
 	raise FileNotFoundError(
-		"No pushover-notify.toml config file found. You max set a custom location "
+		"No pushover-notify.toml config file found. You may set a custom location "
 		"with $PUSHOVER_NOTIFY_CONFIG, or you have to manually create one."
 	)
 
@@ -84,9 +90,9 @@ def pushover_send(
 	po = pushover.Pushover(api_key)
 	po.user(user_key)
 
-	if called_from_script():
-		priority += 1
-	message += "\nPRIORITY=" + str(priority)
+	# if called_from_script():
+	# 	priority += 1
+	# message += "\nPRIORITY=" + str(priority)
 	msg = po.msg(message)
 	if len(title) > 0:
 		msg.set("title", title)
@@ -160,10 +166,11 @@ def usage(output_stream=sys.stdout):
 	print("\t                        one (/etc/pushover-notify.toml).", file=output_stream)
 	print("\tPUSHOVER_APP_ID         Don't use the default API key. Reads from the", file=output_stream)
 	print("\t                        TOML section [app.<app-id>] instead of [pushover].", file=output_stream)
+	print("\tPUSHOVER_PRIORITY       Message priority (-2...1, default: 0)", file=output_stream)
 	print("", file=output_stream)
 
 
-def main(message, title):
+def main(message, title, priority):
 	try:
 		config = toml.load(CONFIG_FILE)
 	except toml.decoder.TomlDecodeError:
@@ -190,7 +197,7 @@ def main(message, title):
 	# )
 	# if _ret is not None:
 	# 	print(SCRIPT_NAME + " :: Return value of push():\n" + _ret, file=sys.stderr)
-	if not pushover_send(API_KEY, USER_KEY, message, title):
+	if not pushover_send(API_KEY, USER_KEY, message, title, priority):
 		print(f"[{__script_name__}] Error: pushover_send() failed.")
 
 
@@ -200,6 +207,9 @@ if "PUSHOVER_APP_ID" in os.environ.keys():
 	CONFIG_SECTION = "app." + os.environ.get("PUSHOVER_APP_ID")
 else:
 	CONFIG_SECTION = "pushover"
+PRIORITY = -1
+if "PUSHOVER_PRIORITY" in os.environ.keys():
+	PRIORITY = int(os.environ.get("PUSHOVER_PRIORITY"))
 
 
 if __name__ == "__main__":
@@ -226,4 +236,4 @@ if __name__ == "__main__":
 		print("\nCtrl+C pressed. Aborting...")
 		sys.exit(1)
 
-	main(message, title)
+	main(message, title, PRIORITY)
