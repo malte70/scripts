@@ -237,11 +237,13 @@ if [[ $OSVARIANT == "Debian" || $OSVARIANT == "Raspbian" || $OSVARIANT == "Ubunt
 
 	message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Update"
 	sudo apt-get update
+	echo
 
 	if [[ $DO_DRY_RUN == "true" ]]; then
 		message2 "Dry-run: Only downloading upgrades"
 		sudo apt-get upgrade -y -d
 		sudo apt-get dist-upgrade -y -d
+		echo
 
 	else
 		message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Upgrade"
@@ -254,9 +256,9 @@ if [[ $OSVARIANT == "Debian" || $OSVARIANT == "Raspbian" || $OSVARIANT == "Ubunt
 
 		message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Cleanup"
 		sudo apt-get autoremove
+		echo
 		
 	fi
-	echo
 fi
 
 
