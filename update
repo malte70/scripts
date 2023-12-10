@@ -260,6 +260,24 @@ if [[ $OSVARIANT == "Debian" || $OSVARIANT == "Raspbian" || $OSVARIANT == "Ubunt
 fi
 
 
+##########################################
+# Rocky Linux: YUM
+# 
+if [[ $OSVARIANT == "Rocky Linux" ]]; then
+	set-xterm-title "[update] YUM update"
+
+	if [[ $DO_DRY_RUN == "true" ]]; then
+		message2 "Dry-run not supported by YUM"
+
+	else
+		message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Update"
+		sudo yum update
+		
+	fi
+	echo
+fi
+
+
 ##################################################
 # Flatpak
 #
