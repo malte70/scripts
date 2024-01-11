@@ -164,12 +164,14 @@ info_hardware() {
 			cat /sys/firmware/devicetree/base/model | tr "\0" "\n"
 		fi
 	elif [ `uname` == "Darwin" ]; then
-		# https://apple.stackexchange.com/a/98089
-		curl -s https://support-sp.apple.com/sp/product\?cc=$(
-  system_profiler SPHardwareDataType \
-    | awk '/Serial/ {print $4}' \
-    | cut -c 9-
-) | sed 's|.*<configCode>\(.*\)</configCode>.*|\1|'
+		# 		# https://apple.stackexchange.com/a/98089
+		# 		curl -s https://support-sp.apple.com/sp/product\?cc=$(
+		#   system_profiler SPHardwareDataType \
+		#     | awk '/Serial/ {print $4}' \
+		#     | cut -c 9-
+		# ) | sed 's|.*<configCode>\(.*\)</configCode>.*|\1|'
+		# 		echo
+		system_profiler SPHardwareDataType | awk '/Model Name/ {print $3" "$4" ("}; /Model Ident/ {print $3")"}' | tr -d "\n"
 		echo
 	else
 		echo "Unable to detect"
