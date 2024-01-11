@@ -10,8 +10,8 @@ LOCALE_OLD=$LC_ALL
 export LC_ALL=C
 
 version_info() {
-	echo "sysinfo 0.20230119"
-	echo "Copyright (c) 2014-2023 Malte Bublitz"
+	echo "sysinfo 0.20240111"
+	echo "Copyright (c) 2014-2024 Malte Bublitz"
 }
 display_help() {
 	version_info
@@ -189,8 +189,11 @@ info_cpu() {
 			echo -n "(CPU Type "
 			grep "^processor 0" /proc/cpuinfo | cut -d= -f4 | stripwhite | tr -d "\n"
 			echo ")"
+		elif [ `uname -m` == "aarch64" ]
+		then
+			grep ^Hardware /proc/cpuinfo | cut -d: -f2 | stripwhite || echo "unknown"
 		else
-		grep "model name" /proc/cpuinfo | uniq | cut -d: -f2- | stripwhite
+			grep "model name" /proc/cpuinfo | uniq | cut -d: -f2- | stripwhite
 		fi
 	fi
 }
@@ -250,7 +253,7 @@ info_terminal() {
 	fi
 	
 	# Check if we are connected to a pseudo terminal device
-	if [ -z $TTY ]; then
+	if [ -z "$TTY" ]; then
 		DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 13))');'`
 		echo "Terminal TTY${DOTS}: (no pseudo terminal)"
 		return
