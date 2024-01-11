@@ -235,6 +235,17 @@ info_env() {
 	[ -n "$ENV_VISUAL" ] && echo "\$VISUAL${DOTS}: $ENV_VISUAL"
     
     # 
+    # $PAGER
+    # 
+    if [ -n "$PAGER" ]; then
+		ENV_PAGER="$(basename $(which $PAGER)) ($(dirname $(which $PAGER)))"
+    else
+        ENV_PAGER=""
+    fi
+	DOTS=`perl -e 'print("." x '$(( ${DESC_COL_LENGTH} - 7))');'`
+	[ -n "$ENV_PAGER" ] && echo "\$PAGER${DOTS}: $ENV_PAGER"
+    
+    # 
     # $BROWSER
     # 
     if [ -n "$BROWSER" ]; then
