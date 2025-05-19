@@ -86,7 +86,12 @@ else
 			UPSTREAM="gist/${REMOTE:20:-4}:$BRANCH"
 			
 		elif [[ "${REMOTE:0:19}" == "https://github.com/" ]]; then
-			UPSTREAM="`echo ${REMOTE:19} | sed 's/.git//g'`:$BRANCH"
+			REMOTE="${REMOTE%.git}"
+			UPSTREAM="${REMOTE:19}:$BRANCH"
+			
+		elif [[ "${REMOTE:0:24}" == "https://gist.github.com/" ]]; then
+			REMOTE="${REMOTE%.git}"
+			UPSTREAM="gist/${REMOTE:24}:$BRANCH"
 			
 		elif [[ "${REMOTE:0:28}" == "ssh://aur@aur.archlinux.org/" ]]; then
 			UPSTREAM="aur-ssh/${REMOTE:28:-4}"
@@ -101,7 +106,15 @@ else
 			UPSTREAM="git.rt3x.de/${REMOTE:16:-4}:$BRANCH"
 			
 		elif [[ "${REMOTE:0:22}" == "git@git.un-hack-bar.de" ]]; then
+			# Old format
 			UPSTREAM="unhb::${REMOTE:23:-4}:$BRANCH"
+			
+		elif [[ "${REMOTE:0:28}" == "ssh://git@git.un-hack-bar.de" ]]; then
+			UPSTREAM="unhb::${REMOTE:31:-4}:$BRANCH"
+			
+		elif [[ "${REMOTE:0:28}" == "https://git.un-hack-bar.de" ]]; then
+			REMOTE="${REMOTE%.git}"
+			UPSTREAM="unhb::${REMOTE:31}:$BRANCH"
 			
 		else
 			UPSTREAM="${REMOTE}:$BRANCH"
