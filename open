@@ -193,8 +193,6 @@ for FILE in ${FILES[@]}; do
 	if [[ $FILE_COUNT -eq 1 ]]; then
 	fi
 	
-	# Open file using $APP, detached from the terminal
-	$APP "$FILE" </dev/null &>/dev/null &|
 	# Open file using $APP
 	if [[ $OPT_FORK -eq 1 ]]; then
 		# Run detached from the terminal (fork to background)
