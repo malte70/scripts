@@ -99,11 +99,11 @@ def main():
 		return 1
 
 	size = (
-		os.getenv("SCREENSHOT_WIDTH", 1280),
-		os.getenv("SCREENSHOT_HEIGHT", 1024),
+		int(os.getenv("SCREENSHOT_WIDTH", 1280)),
+		int(os.getenv("SCREENSHOT_HEIGHT", 1024)),
 	)
-	timeout    = os.getenv("SCREENSHOT_TIMEOUT", 15)
-	sleep_time = os.getenv("SCREENSHOT_SLEEP", 5)
+	timeout    = int(os.getenv("SCREENSHOT_TIMEOUT", 15))
+	sleep_time = int(os.getenv("SCREENSHOT_SLEEP", 5))
 	make_screenshot(
 		url,
 		img,
@@ -136,6 +136,9 @@ if __name__ == "__main__":
 		elif arg.startswith("-"):
 			print("Unknown option: " + arg)
 			sys.exit(1)
+
+		elif argc < 3:
+			continue
 
 		else:
 			usage(sys.stderr)
