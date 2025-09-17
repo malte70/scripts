@@ -109,7 +109,12 @@ else
 			# Old format
 			UPSTREAM="unhb::${REMOTE:23:-4}:$BRANCH"
 			
+		elif [[ "${REMOTE:0:33}" == "ssh://git@git.un-hack-bar.de:2222" ]]; then
+			# New format with SSH port
+			UPSTREAM="unhb::${REMOTE:34:-4}:$BRANCH"
+			
 		elif [[ "${REMOTE:0:28}" == "ssh://git@git.un-hack-bar.de" ]]; then
+			# New format, but WITHOUT SSH port
 			UPSTREAM="unhb::${REMOTE:31:-4}:$BRANCH"
 			
 		elif [[ "${REMOTE:0:28}" == "https://git.un-hack-bar.de" ]]; then
