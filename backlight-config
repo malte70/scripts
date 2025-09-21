@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# 
+# Select display backlight brightness
+# 
+
+_default_value=$(xbacklight -get | cut -d. -f1)
+_backlight_percent=$(zenity --scale --text="Use the slider to select a brightnes level" --title="Display Backlight Brightness" \
+	--value=${_default_value} --min-value=0 --max-value=100 --step=5 2>/dev/null)
+
+if [[ $? -eq 0 ]]; then
+	xbacklight -set ${_backlight_percent}
+
+fi
+
