@@ -183,7 +183,9 @@ elif [[ `uname -o` == "Cygwin" ]]; then
 	OSVERSION=`python -c 'import OSDetect; _i = OSDetect.OSInfo(); print _i.GetInfo()["OSVersion"]'`
 else
 	OS=`uname -o`
-	if which lsb_release &>/dev/null; then
+	if [[ -e /etc/os-release ]]; then
+		OSVARIANT=`grep ^NAME= /etc/os-release | cut -d= -f2 | tr -d \"`
+	elif which lsb_release &>/dev/null; then
 		OSVARIANT=`lsb_release -s -i`
 	else
 		OSVARIANT=$OS
