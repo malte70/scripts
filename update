@@ -7,7 +7,7 @@
 # 
 
 SCRIPT_NAME="$(basename $0)"
-SCRIPT_VERSION="0.20230126"
+SCRIPT_VERSION="0.20251204"
 
 source $(dirname $0)/_base.inc.sh
 
@@ -263,17 +263,20 @@ fi
 
 
 ##########################################
-# Rocky Linux: YUM
+# Fedora/Rocky Linux: dnf
 # 
-if [[ $OSVARIANT == "Rocky Linux" ]]; then
-	set-xterm-title "[update] YUM update"
+if [[ $OSVARIANT == "Fedora Linux" || $OSVARIANT == "Rocky Linux" ]]; then
+	set-xterm-title "[update] dnf upgrade"
 
 	if [[ $DO_DRY_RUN == "true" ]]; then
-		message2 "Dry-run not supported by YUM"
-
+		#message2 "Dry-run not supported yet for dnf"
+		message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Upgrade (download only)"
+		#sudo dnf check-upgrade
+		sudo dnf upgrade --downloadonly -y
+		
 	else
-		message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Update"
-		sudo yum update
+		message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Upgrade"
+		sudo dnf upgrade
 		
 	fi
 	echo
