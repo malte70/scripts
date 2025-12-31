@@ -21,7 +21,7 @@ def usage(output=sys.stdout) -> None:
 	print(f"Usage: {argv0} <url>", file=output)
 
 
-def get_title(url: str) -> str | None:
+def get_title(url: str):
 	"""Get a web site's title.
 
 	Uses og:title by default, or the classic <title> tag. Returns None if neither are found.

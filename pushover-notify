@@ -24,7 +24,10 @@ import platform
 # https://github.com/Wyattjoh/pushover
 # from pushover import Pushover
 import pushover
-import requests
+try:
+	import requests
+except ImportError:
+	pass
 import toml
 
 

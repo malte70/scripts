@@ -131,7 +131,7 @@ message() {
 message_error() {
 	(
 		_print_term $_ANSI_COLOR_RED
-		_print "[${SCRIPT_NAME}] Error: "
+		_print "[${SCRIPT_NAME}] [ERROR] "
 		_print_term $_ANSI_RESET
 		_println "$@"
 	) >&2
@@ -140,7 +140,7 @@ message_error() {
 message_info() {
 	(
 		_print_term $_ANSI_COLOR_YELLOW
-		_print "[${SCRIPT_NAME}] [INFO] "
+		_print "[${SCRIPT_NAME}] [INFO]  "
 		_print_term $_ANSI_RESET
 		_println "$@"
 	) >&2

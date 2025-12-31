@@ -60,7 +60,11 @@ _md2html() {
 		--output "$html"
 	
 	# Table borders and cellpadding, the dirty way
-	sed -i 's|<table>|<table border="1" cellpadding="6">|g' "$html"
+	if [[ $OS == "Mac OS X" || $OS == "FreeBSD" ]]; then
+		gsed -i 's|<table>|<table border="1" cellpadding="6">|g' "$html"
+	else
+		sed -i 's|<table>|<table border="1" cellpadding="6">|g' "$html"
+	fi
 }
 
 markdown="$1"
