@@ -274,7 +274,7 @@ if [[ $OSVARIANT == "Fedora Linux" || $OSVARIANT == "Rocky Linux" ]]; then
 		sudo dnf upgrade --refresh --downloadonly -<
 
 	else
-		message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Update"
+		message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Upgrade"
 		sudo dnf upgrade --refresh 
 		
 		message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Cleanup"
