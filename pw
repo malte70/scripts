@@ -1,0 +1,43 @@
+#!/usr/bin/env zsh
+#
+# Paranoid password generator
+#
+
+# Generate multiple passwords to cholse from
+GENERATE_PASSWORD_COUNT=5
+
+printf "${_ANSI_ATTR_ALTERNATE_BUFFER_ENABLED}"
+clear
+
+printf $_ANSI_COLOR_LIGHT_GREEN
+echo "# Generating passwords using paranoid settings"
+printf "\n"
+printf "\n"
+printf $_ANSI_COLOR_CYAN
+echo "    GENERATE_PASSWORD_LENGTH=32"
+echo "    GENERATE_PASSWORD_INCLUDE_SPECIAL=1"
+echo "    GENERATE_PASSWORD_COUNT=5"
+printf "\n"
+printf "\n"
+printf $_ANSI_RESET
+
+for i in `seq 1 ${GENERATE_PASSWORD_COUNT}`
+do
+        env \
+                GENERATE_PASSWORD_INCLUDE_SPECIAL=1 \
+                GENERATE_PASSWORD_LENGTH=32 \
+                generate_password
+
+        #       | tr -d "\n" | pbcopy
+done
+
+printf "\n"
+printf "\n"
+printf $_ANSI_COLOR_YELLOW
+printf $_ANSI_ATTR_ITALIC
+echo "Press <ENTER> to return and hide these passwords."
+printf $_ANSI_RESET
+read
+
+printf "${_ANSI_ATTR_ALTERNATE_BUFFER_DISABLED}"
+# End.
