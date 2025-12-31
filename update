@@ -7,7 +7,7 @@
 # 
 
 SCRIPT_NAME="$(basename $0)"
-SCRIPT_VERSION="0.20230126"
+SCRIPT_VERSION="0.20251204"
 
 source $(dirname $0)/_base.inc.sh
 
@@ -264,20 +264,20 @@ fi
 
 
 ##########################################
-# Rocky Linux: YUM
+# Fedora/Rocky Linux: dnf
 # 
-if [[ $OSVARIANT == "Rocky Linux" ]]; then
-	set-xterm-title "[update] YUM update"
+if [[ $OSVARIANT == "Fedora Linux" || $OSVARIANT == "Rocky Linux" ]]; then
+	set-xterm-title "[update] dnf upgrade"
 
 	if [[ $DO_DRY_RUN == "true" ]]; then
 		message2 "Dry-run: Only downloading upgrades"
-		sudo dnf upgrade --refresh --downloadonly
+		sudo dnf upgrade --refresh --downloadonly -<
 
 	else
 		message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Update"
 		sudo dnf upgrade --refresh 
 		
-		message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Autoremove/Clean"
+		message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Cleanup"
 		sudo dnf autoremove
 		sudo dnf clean packages
 		
