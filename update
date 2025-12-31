@@ -176,7 +176,8 @@ if which pass &>/dev/null; then
 	set-xterm-title "[update] pass"
 	message_status "$(message_spaces_fill 'pass' $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "sync"
 	if [[ $DO_DRY_RUN == "true" ]]; then
-		message2 "Dry-run: Skipped."
+		message2 "Dry-run: pass git fetch"
+		pass git fetch
 
 	else
 		if [ ! -f ~/.update-skip-pass ]; then
@@ -269,11 +270,16 @@ if [[ $OSVARIANT == "Rocky Linux" ]]; then
 	set-xterm-title "[update] YUM update"
 
 	if [[ $DO_DRY_RUN == "true" ]]; then
-		message2 "Dry-run not supported by YUM"
+		message2 "Dry-run: Only downloading upgrades"
+		sudo dnf upgrade --refresh --downloadonly
 
 	else
 		message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Update"
-		sudo yum update
+		sudo dnf upgrade --refresh 
+		
+		message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Autoremove/Clean"
+		sudo dnf autoremove
+		sudo dnf clean packages
 		
 	fi
 	echo
