@@ -9,8 +9,7 @@
 SCRIPT_NAME="$(basename $0)"
 SCRIPT_VERSION="0.20251204"
 
-source $(dirname $0)/_base.inc.sh
-OSVARIANT=${OSVARIANT/ GNU\/Linux/}
+source $(dirname $0)/libscriptutils.inc.sh
 
 
 #APP_ACTION_FILLER="."
@@ -234,7 +233,7 @@ fi
 ##########################################
 # Debian/Ubuntu: APT
 # 
-if [[ $OSVARIANT == "Debian" || $OSVARIANT == "Raspbian" || $OSVARIANT == "Ubuntu" ]]; then
+if [[ $OSVARIANT == Debian* || $OSVARIANT == Raspbian* || $OSVARIANT == "Ubuntu" ]]; then
 	set-xterm-title "[update] APT upgrade"
 
 	message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Update"
