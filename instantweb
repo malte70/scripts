@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+# 
+# HTTP Server for current directory
+# 
+
+
+SCRIPT_NAME="instantweb"
+SCRIPT_VERSION="0.20260101"
+
+
+################################################################
+# 
+# Configuration
+# 
+
+# Port
+PORT=${PORT:-42080}
+
+# Config end.
+################################################################
+
+
+
+# 
+# Include my shell script library
+# 
+source $(dirname $0)/libscriptutils.inc.sh
+
+
+
+# 
+# Command line help
+# 
+usage() {
+	echo "Usage:"
+	echo
+	echo -e "\t${SCRIPT_NAME}"
+	echo -e "\t${SCRIPT_NAME} [--help|--version]"
+	echo
+	echo "Options:"
+	echo
+	echo -e "\t-h, --help     Show this usage help"
+	echo -e "\t-V, --version  Show script name and version"
+	echo
+	echo "Environment:"
+	echo
+	echo -e "\t\$PORT  Port to use, defaults to 42080"
+	echo -e "\t\$PWD   The directory shared by instantweb: Your current"
+	echo -e "\t       working directory"
+	echo
+}
+
+
+
+#
+# Parse command line
+#
+while [[ $# -gt 0 ]]; do
+	if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+		usage
+		exit 0
+		
+	elif [[ "$1" == "--version" || "$1" == "-V" ]]; then
+		version
+		exit 0
+		
+	else
+		message_error "Unknown argument: \"$1\""
+		exit 2
+	fi
+	
+	shift
+done
+
+
+
+# 
+# Startup info
+# 
+# - Some sort of “logo”
+# - show served directory and instanteb URL
+# 
+echo '
+     _           _              _                _     
+    (_)_ __  ___| |_ __ _ _ __ | |___      _____| |__  
+    | | '\''_ \/ __| __/ _` | '\''_ \| __\ \ /\ / / _ \ '\''_ \ 
+    | | | | \__ \ || (_| | | | | |_ \ V  V /  __/ |_) |
+    |_|_| |_|___/\__\__,_|_| |_|\__| \_/\_/ \___|_.__/ 
+
+'
+printf "Web root:\n\t$PWD\n\n"
+printf "URL:\n\thttp://"
+myip -x | grep -E '^(en|wl|eth|wlan)' | cut -d" " -f2 | tr -d "\n"
+printf ":${PORT}/\n"
+command -v avahi-daemon 2>&1 >/dev/null \
+	&& printf "\thttp://$(hostname -s).local:${PORT}/\n"
+printf "\n"
+
+
+
+# 
+# Temporarily allow our port
+# 
+if [[ $OSVARIANT == "Fedora Linux" ]]; then
+	message_info "Detected Fedora Linux. Adding port to firewalld."
+	sudo firewall-cmd --add-port=${PORT}/tcp
+	
+fi
+
+
+
+# 
+# Run Python's http.server
+# 
+message_info "Running web server. Abort by pressing Ctrl+C."
+python -m http.server $PORT
+
+
