@@ -34,8 +34,10 @@ function usage {
 	echo "  → Installed packages"
 	echo "     → ArchLinux: pacman + AUR"
 	echo "     → Ubuntu/Debian: APT"
+	echo "     → Fedora/RockyLinux: RPM (dnf)"
+	echo "     → All distros: Flatpak"
 	echo "     → macOS: Homebrew, MacPorts and App Store[1]"
-	echo "  → "
+	echo "  → tldr page cache"
 	echo
 	echo "[1]: Requires <https://github.com/mas-cli/mas> (available via Homebrew)"
 	echo
@@ -65,6 +67,7 @@ while [[ $# -gt 0 ]]; do
 		message_error "Unknown option: \"$1\""
 
 	else
+		true
 
 	fi
 	shift
@@ -271,7 +274,7 @@ if [[ $OSVARIANT == "Fedora Linux" || $OSVARIANT == "Rocky Linux" ]]; then
 
 	if [[ $DO_DRY_RUN == "true" ]]; then
 		message2 "Dry-run: Only downloading upgrades"
-		sudo dnf upgrade --refresh --downloadonly -<
+		sudo dnf upgrade --refresh --downloadonly -y
 
 	else
 		message_status "$(message_spaces_fill "$OSVARIANT" $APP_ACTION_LENGTH "$APP_ACTION_FILLER")" "Upgrade"
