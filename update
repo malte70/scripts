@@ -10,6 +10,7 @@ SCRIPT_NAME="$(basename $0)"
 SCRIPT_VERSION="0.20251204"
 
 source $(dirname $0)/_base.inc.sh
+OSVARIANT=${OSVARIANT/ GNU\/Linux/}
 
 
 #APP_ACTION_FILLER="."
